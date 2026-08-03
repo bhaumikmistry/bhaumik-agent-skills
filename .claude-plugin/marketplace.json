@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "bhaumik-agent-skills",
+  "description": "Bhaumik Mistry's personal agent skills for Claude Code.",
+  "owner": {
+    "name": "Bhaumik Mistry",
+    "url": "https://www.bhaumikmistry.com"
+  },
+  "plugins": [
+    {
+      "name": "bhaumik",
+      "source": "./",
+      "description": "Agent skills: communication coaching, message drafting, interaction review, async interview series management, and AI-voice detection/rewriting.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Bhaumik Mistry",
+        "url": "https://github.com/bhaumikmistry"
+      },
+      "homepage": "https://github.com/bhaumikmistry/bhaumik-agent-skills",
+      "category": "productivity"
+    }
+  ]
+}
