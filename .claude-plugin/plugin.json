@@ -1,8 +1,8 @@
 {
   "name": "bhaumik",
   "displayName": "Bhaumik: Personal Skills",
-  "version": "0.1.0",
-  "description": "Agent skills: communication coaching, message drafting, interaction review, meeting prep, async interview series management, and AI-voice detection/rewriting.",
+  "version": "0.2.0",
+  "description": "Agent skills: communication coaching, message drafting, interaction review, meeting prep, async interview series management, AI-voice detection/rewriting, and interactive isometric architecture maps from a repo, an idea, or design docs.",
   "author": {
     "name": "Bhaumik Mistry",
     "url": "https://github.com/bhaumikmistry"

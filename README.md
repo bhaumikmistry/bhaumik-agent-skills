@@ -46,6 +46,22 @@ Key principles:
 - Reference something specific they made/wrote/built
 - Create tension or contrast they have to resolve
 
+### architecture-map
+
+Turn **anything** — a repo, an idea, a rough thought, or one/many design docs —
+into an interactive isometric "city" map of a system's architecture. One
+self-contained HTML page: a zoomable/pannable iso diagram on the left, a
+click-to-inspect side panel on the right, light + dark themes built in.
+
+| Stage | What it does |
+|-------|--------------|
+| **1 · Knowledge doc** | Synthesize the authored understanding — groups (districts), subsystems (nodes) with role/weight/tech, edges, and the primary flow. Measured for a repo; authored for an idea or design doc. |
+| **2 · Interactive page** | Copy the bundled engine (`assets/architecture-map.html`) and fill one `DATA` block. Auto-layout, zoom/pan, click→panel, and theming are already solved. |
+
+Fires on: "architecture diagram", "system map", "codebase overview", "show me
+how this works", "visualize this design". Open `assets/architecture-map.html`
+to see a complete worked example (an RPA browser-automation platform).
+
 ## Structure
 
 ```
@@ -59,14 +75,21 @@ skills/
 │   ├── review-mode.md      ← message review flow
 │   ├── reflect-mode.md     ← Slack history review flow
 │   └── coach-mode.md       ← meeting/conversation prep flow
-└── interviewer/
-    ├── SKILL.md            ← dispatcher
-    ├── tone.md             ← voice & personality guide
-    ├── question-craft.md   ← question anatomy, arc, techniques
-    ├── outreach.md         ← cold outreach by platform
-    ├── follow-up.md        ← nudge strategies & thread revival
-    └── data/
-        └── target-list.md  ← pipeline reference & series info
+├── interviewer/
+│   ├── SKILL.md            ← dispatcher
+│   ├── tone.md             ← voice & personality guide
+│   ├── question-craft.md   ← question anatomy, arc, techniques
+│   ├── outreach.md         ← cold outreach by platform
+│   ├── follow-up.md        ← nudge strategies & thread revival
+│   └── data/
+│       └── target-list.md  ← pipeline reference & series info
+└── architecture-map/
+    ├── SKILL.md            ← two-stage flow (knowledge doc → interactive page)
+    ├── references/
+    │   ├── knowledge-doc.md  ← Stage 1: synthesize the understanding
+    │   └── rendering.md      ← Stage 2: DATA schema, projection, solved gotchas
+    └── assets/
+        └── architecture-map.html  ← engine + worked example (copy & swap DATA)
 ```
 
 ## Adding new skills
