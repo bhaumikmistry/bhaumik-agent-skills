@@ -62,6 +62,16 @@ Fires on: "architecture diagram", "system map", "codebase overview", "show me
 how this works", "visualize this design". Open `assets/architecture-map.html`
 to see a complete worked example (an RPA browser-automation platform).
 
+### not-ai
+
+Rewrites text to strip the patterns that make writing sound machine-generated. Uses an anti-pattern catalog derived from Wikipedia's "Signs of AI writing" as the rubric.
+
+### arsenal-match-writeup
+
+Turns a played Arsenal fixture into a post on bhaumikmistry.com and a row on the gooner tracker. Checks the goal timeline against the ESPN report and the quotes against the post-match coverage before writing a word, updates `fixtures.json`, then runs the prose through not-ai and the slop detector.
+
+Written after a pass over that blog found 28 posts whose Arteta quotes were every one of them invented.
+
 ## Structure
 
 ```
@@ -83,6 +93,12 @@ skills/
 │   ├── follow-up.md        ← nudge strategies & thread revival
 │   └── data/
 │       └── target-list.md  ← pipeline reference & series info
+├── not-ai/
+│   ├── SKILL.md            ← rewrite rules
+│   └── anti-patterns.md    ← detection rubric
+├── arsenal-match-writeup/
+│   ├── SKILL.md            ← verify, write, update the tracker
+│   └── post-format.md      ← what a match post looks like
 └── architecture-map/
     ├── SKILL.md            ← two-stage flow (knowledge doc → interactive page)
     ├── references/
