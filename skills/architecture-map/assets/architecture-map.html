@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Architecture map</title>
+<!--
+  =====================================================================
+  ARCHITECTURE MAP — self-contained interactive isometric map
+  =====================================================================
+  HOW TO USE THIS FILE
+  - This one file is BOTH the rendering engine AND a worked example.
+  - To make your own map, edit ONLY the `DATA` object marked below.
+    Everything under "ENGINE — do not edit" renders whatever DATA says.
+  - No build, no dependencies, no network. Open it in a browser.
+
+  DATA schema (all positions are OPTIONAL — auto-layout handles them):
+    title, subtitle            strings shown in the header
+    groups: { key: { label, hue } }        districts; hue 0-360 (optional)
+    nodes:  { id: {
+                group,                       group key (required)
+                name,                        label on the building (required)
+                role,                        short noun phrase for the panel
+                tech,                        example tech / implementation
+                owns: [ "sentence", ... ],   what it does, in plain language
+                h,                           height 1-6 = the subsystem's weight
+                w, d,                        footprint in grid cells (default 2x2)
+                gx, gy                       explicit grid position (optional)
+            } }
+    edges:  [ [from, to, type, verb], ... ]  type is "run" (solid) or "dep" (dashed)
+    overview: { intro: ["para", ...], steps: [ {title, text}, ... ] }   (optional)
+
+  AUTHORING TIPS
+  - 4-7 groups, 8-25 nodes. Height tracks weight (the busiest subsystem is tallest).
+  - Order nodes within a group left-to-right along the flow; auto-layout lays
+    each group out as its own row (district), front-to-back in `groups` order.
+  - Only draw an edge that reflects a real (or intended) call / data path.
+  - "run" edges form the primary flow; "dep" edges are supporting dependencies.
+  =====================================================================
+-->
+<style>
+  :root{
+    --paper: oklch(0.975 0.008 85);
+    --band:  oklch(0.955 0.013 250);
+    --panel: oklch(0.99 0.004 85);
+    --ink:   oklch(0.28 0.03 260);
+    --ink-2: oklch(0.48 0.02 260);
+    --line:  oklch(0.82 0.015 250);
+    --accent: oklch(0.55 0.16 250);
+    --mute:  oklch(0.60 0.04 250);
+    --pill:  oklch(1 0 0 / .80);
+    --pill-ink: oklch(0.26 0.03 260);
+    --btn:   oklch(1 0 0 / .9);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --body: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper: oklch(0.19 0.03 255);
+      --band:  oklch(0.235 0.035 255);
+      --panel: oklch(0.235 0.035 255);
+      --ink:   oklch(0.94 0.02 250);
+      --ink-2: oklch(0.76 0.03 250);
+      --line:  oklch(0.40 0.05 250);
+      --accent: oklch(0.80 0.15 232);
+      --mute:  oklch(0.70 0.06 245);
+      --pill:  oklch(0.16 0.03 255 / .85);
+      --pill-ink: oklch(0.92 0.02 250);
+      --btn:   oklch(0.30 0.04 255);
+    }
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{ background:var(--paper); color:var(--ink); font-family:var(--body); height:100dvh; overflow:hidden; display:flex; flex-direction:column; -webkit-font-smoothing:antialiased; }
+
+  header.bar{ flex:0 0 auto; display:flex; align-items:center; gap:16px; padding:12px clamp(14px,2.5vw,26px); border-bottom:1.5px solid var(--ink); }
+  header .mark{ font-family:var(--mono); font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--accent); }
+  header h1{ font-family:var(--mono); font-weight:700; font-size:clamp(14px,1.6vw,18px); margin:0; letter-spacing:-0.01em; }
+  header .sub{ font-family:var(--mono); font-size:11px; color:var(--ink-2); margin-left:auto; }
+  @media (max-width:620px){ header .sub{ display:none; } }
+
+  .app{ flex:1 1 auto; display:grid; grid-template-columns:1fr min(40vw,400px); min-height:0; }
+  @media (max-width:860px){ .app{ grid-template-columns:1fr; grid-template-rows:56dvh 1fr; } }
+
+  .stage{ position:relative; min-width:0; min-height:0; background:var(--band); overflow:hidden; }
+  .stage svg{ display:block; width:100%; height:100%; touch-action:none; cursor:grab; }
+  .stage svg.grabbing{ cursor:grabbing; }
+
+  .controls{ position:absolute; left:14px; bottom:14px; display:flex; gap:6px; }
+  .controls button{ font-family:var(--mono); font-size:15px; line-height:1; width:34px; height:34px; border:1px solid var(--line); background:var(--btn); color:var(--ink); border-radius:7px; cursor:pointer; }
+  .controls button.wide{ width:auto; padding:0 12px; font-size:11px; letter-spacing:.08em; }
+  .controls button:hover{ border-color:var(--accent); color:var(--accent); }
+  .hint{ position:absolute; right:14px; top:12px; font-family:var(--mono); font-size:10.5px; color:var(--ink-2); background:var(--pill); padding:5px 9px; border-radius:6px; border:1px solid var(--line); }
+
+  aside.panel{ border-left:1px solid var(--line); background:var(--panel); overflow:auto; min-height:0; }
+  @media (max-width:860px){ aside.panel{ border-left:0; border-top:1px solid var(--line); } }
+  .pad{ padding:clamp(16px,2vw,24px); }
+  .p-kicker{ font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; margin:0 0 8px; }
+  .p-title{ font-family:var(--mono); font-weight:700; font-size:20px; margin:0 0 4px; line-height:1.15; }
+  .p-role{ font-family:var(--mono); font-size:12px; color:var(--ink-2); margin:0 0 16px; }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:11px; padding:3px 9px; border-radius:20px; border:1px solid var(--accent); color:var(--accent); margin:0 0 18px; }
+  .p-body{ font-size:15px; } .p-body p{ margin:0 0 14px; line-height:1.62; }
+  .sec-h{ font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2); border-bottom:1px solid var(--line); padding-bottom:6px; margin:22px 0 12px; }
+  .conn{ list-style:none; padding:0; margin:0; }
+  .conn li{ display:flex; align-items:center; gap:8px; padding:6px 0; font-family:var(--mono); font-size:12.5px; cursor:pointer; border-bottom:1px dotted var(--line); }
+  .conn li:hover{ color:var(--accent); } .conn .arw{ color:var(--accent); font-weight:700; } .conn .verb{ margin-left:auto; font-size:10px; color:var(--ink-2); letter-spacing:.06em; }
+  .legend{ list-style:none; padding:0; margin:0 0 8px; }
+  .legend li{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:12px; padding:5px 0; color:var(--ink-2); }
+  .legend .sw{ width:22px; height:12px; border-radius:3px; flex:0 0 auto; } .legend .dot{ width:12px; height:12px; border-radius:50%; flex:0 0 auto; }
+  ol.mini{ counter-reset:s; list-style:none; padding:0; margin:0; }
+  ol.mini li{ position:relative; padding:3px 0 12px 34px; border-left:1px solid var(--line); margin-left:9px; font-size:14px; }
+  ol.mini li::before{ counter-increment:s; content:counter(s); position:absolute; left:-9px; top:0; width:19px; height:19px; border-radius:50%; background:var(--panel); border:1.4px solid var(--accent); color:var(--accent); font-family:var(--mono); font-size:9.5px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  ol.mini li:last-child{ border-left-color:transparent; } ol.mini b{ font-family:var(--mono); font-size:12.5px; }
+  .backbtn{ font-family:var(--mono); font-size:11px; background:none; border:none; color:var(--accent); cursor:pointer; padding:0 0 14px; letter-spacing:.04em; }
+  .backbtn:hover{ text-decoration:underline; }
+
+  #scene > :not(.node){ pointer-events:none; }   /* only buildings are clickable */
+  .node{ cursor:pointer; }
+  .stage svg.has-sel .node:not(.sel){ opacity:.28; }
+  .node.sel polygon{ stroke:var(--accent) !important; stroke-width:2.4 !important; }
+  .stage svg.has-sel .edge-line:not(.hot){ opacity:.10 !important; }
+  .edge-line.hot{ stroke:var(--accent) !important; stroke-width:2.6 !important; opacity:1 !important; }
+  @media (prefers-reduced-motion: reduce){ .payload{ display:none !important; } }
+</style>
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <div class="mark" id="mark">Architecture map · isometric</div>
+      <h1 id="title">Architecture map</h1>
+    </div>
+    <div class="sub">click a building for detail · scroll to zoom · drag to pan</div>
+  </header>
+  <div class="app">
+    <div class="stage">
+      <svg id="scene" role="img" aria-label="Isometric architecture map. Click a building for detail."></svg>
+      <div class="hint">2:1 dimetric · height = weight</div>
+      <div class="controls">
+        <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+        <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
+        <button id="zreset" class="wide" title="Reset view">RESET</button>
+      </div>
+    </div>
+    <aside class="panel"><div class="pad" id="panel"></div></aside>
+  </div>
+
+<script>
+/* =====================================================================
+   DATA — EDIT THIS BLOCK ONLY. (Below it is the engine; leave it alone.)
+   This example: an RPA browser-automation platform built on services.
+   ===================================================================== */
+var DATA = {
+  title: "Browser automation for RPA, on services",
+  subtitle: "Reference architecture · isometric",
+  groups: {
+    trig: { label: "Triggers & inputs",        hue: 262 },
+    pipe: { label: "Run pipeline",             hue: 235 },
+    svc:  { label: "Platform services & ops",  hue: 75  }
+  },
+  nodes: {
+    console:  { group:'trig', name:'Console & API', role:'Control-plane entry', tech:'API Gateway + service · REST/gRPC', h:3,
+      owns:['Where humans and systems define automations, submit runs, and read status.','Holds no credentials and does no browser work itself — the front door, not the factory.'] },
+    sched:    { group:'trig', name:'Scheduler', role:'Trigger source', tech:'EventBridge / cron', h:2,
+      owns:['Fires runs on a schedule or in response to events, then calls the orchestrator.','Decouples “when a run happens” from “how it runs.”'] },
+    locator:  { group:'trig', name:'Locator / vision', role:'Element resolution', tech:'role/text selectors + computer vision', h:3,
+      owns:['Given a step’s intent, finds the right element on the page.','Prefers stable roles/attributes and falls back to a vision model when the DOM shifts.'] },
+
+    orch:     { group:'pipe', name:'Orchestrator', role:'Workflow engine', tech:'Step Functions / Temporal', h:5,
+      owns:['Expands an automation into ordered steps with retry, branch, and checkpoint logic.','Enqueues one job per run and resumes runs parked for human review.'] },
+    queue:    { group:'pipe', name:'Job queue', role:'Work buffer', tech:'SQS / Kafka', h:3, w:3,
+      owns:['Decouples triggers from execution and absorbs spikes.','Runners pull only when they have capacity — natural backpressure.'] },
+    runner:   { group:'pipe', name:'Bot runner', role:'Execution worker', tech:'ECS / Fargate / K8s', h:5,
+      owns:['Stateless worker that owns exactly one run at a time.','Checks out a browser, fetches secrets, drives the engine, writes results, emits signals — then dies clean.'] },
+    engine:   { group:'pipe', name:'Browser engine', role:'Browser control', tech:'Playwright / Puppeteer', h:6,
+      owns:['Programmatically navigates, clicks, types, waits, and extracts data.','The tallest building on purpose: most of the automation logic lives here.'] },
+    pool:     { group:'pipe', name:'Session pool', role:'Browser fleet', tech:'Chromium in containers', h:4, w:3,
+      owns:['Hands out isolated, disposable headless browser sessions.','Destroys each session after its run so state never leaks between bots.'] },
+
+    excpt:    { group:'svc', name:'Exception / HITL', role:'Human-in-the-loop', tech:'review UI + task queue', h:2,
+      owns:['Parks unrecoverable runs with full context — screenshot, DOM, logs — for a person to resolve.','Signals the orchestrator to resume from the checkpoint rather than restart.'] },
+    obs:      { group:'svc', name:'Observability', role:'Operations plane', tech:'OpenSearch / CloudWatch', h:4,
+      owns:['Correlated logs, traces, metrics, and session video.','Turns “the bot failed” into a timeline you can read and act on.'] },
+    secrets:  { group:'svc', name:'Secrets vault', role:'Credential store', tech:'Secrets Manager / Vault', h:2,
+      owns:['Serves per-run scoped credentials at the moment of use.','Values are never persisted by the runner or written to logs and recordings.'] },
+    artifact: { group:'svc', name:'Artifact store', role:'Evidence store', tech:'S3', h:3,
+      owns:['Stores screenshots, downloaded files, and session recordings produced during a run.','The durable record of what the bot saw and did.'] },
+    state:    { group:'svc', name:'State & results', role:'System of record', tech:'DynamoDB / Postgres', h:3,
+      owns:['Holds run state, checkpoints, and structured outputs.','The durable truth a stateless runner relies on to be resumable.'] }
+  },
+  edges: [
+    ['console','orch','run','define'], ['sched','orch','run','trigger'],
+    ['orch','queue','run','enqueue'], ['queue','runner','run','pull'],
+    ['runner','engine','run','drive'], ['engine','pool','run','open'],
+    ['locator','engine','dep','query'], ['runner','secrets','dep','fetch creds'],
+    ['engine','artifact','dep','save'], ['pool','state','dep','persist'],
+    ['runner','obs','dep','emit'], ['runner','excpt','dep','on error'], ['excpt','orch','dep','resume']
+  ],
+  overview: {
+    intro: [
+      "Classic RPA replays a macro on one desktop. Re-cast as services, each hard part gets an owner: a queue owns backpressure, a vault owns credentials, a pool owns browser isolation, an observability plane owns “why did run #4,812 fail.”",
+      "Building height tracks each subsystem’s weight — the tallest is the Browser engine, where most automation logic lives."
+    ],
+    steps: [
+      {title:'Trigger',    text:'schedule, event, or API call submits a run.'},
+      {title:'Orchestrate',text:'expand into steps, enqueue one job.'},
+      {title:'Distribute', text:'job waits in the queue for capacity.'},
+      {title:'Acquire',    text:'runner checks out a clean browser session.'},
+      {title:'Secrets',    text:'credentials fetched just-in-time, per run.'},
+      {title:'Drive',      text:'engine navigates, clicks, types, extracts.'},
+      {title:'Capture',    text:'screenshots + results stream to the stores.'},
+      {title:'Signals',    text:'logs, traces, metrics, video emitted.'},
+      {title:'Exceptions', text:'park for a human, then resume.'},
+      {title:'Tear down',  text:'destroy the session; pull the next job.'}
+    ]
+  }
+};
+
+/* =====================================================================
+   ENGINE — do not edit below this line.
+   ===================================================================== */
+(function(){
+  var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var TW=34, TH=17, ZH=16;
+  function proj(gx,gy,z){ return { x:(gx-gy)*TW, y:(gx+gy)*TH - z*ZH }; }
+
+  var FALLBACK_HUES = [235,262,75,150,320,25];
+  var G = DATA.groups, N = DATA.nodes, E = DATA.edges || [];
+  Object.keys(G).forEach(function(k,i){ if(G[k].hue==null) G[k].hue = FALLBACK_HUES[i % FALLBACK_HUES.length]; });
+
+  // ---- auto-layout: each group is a row (district); nodes flow left-to-right ----
+  (function autoLayout(){
+    var bandGap=4, nodeGapX=2, gyCursor=0;
+    Object.keys(G).forEach(function(g){
+      var members = Object.keys(N).filter(function(id){ return N[id].group===g; });
+      var bandDepth = 2;
+      members.forEach(function(id){ bandDepth = Math.max(bandDepth, N[id].d||2); });
+      var gx=0;
+      members.forEach(function(id){
+        var n=N[id]; n.w=n.w||2; n.d=n.d||2; n.h=n.h||3;
+        if(n.gx==null) n.gx=gx;
+        if(n.gy==null) n.gy=gyCursor;
+        gx = n.gx + n.w + nodeGapX;
+      });
+      gyCursor += bandDepth + bandGap;
+    });
+  })();
+
+  function facesFor(hue){
+    if(dark) return { top:'oklch(0.72 0.13 '+hue+')', left:'oklch(0.58 0.13 '+hue+')', right:'oklch(0.46 0.11 '+hue+')', edge:'oklch(0.88 0.06 '+hue+')' };
+    return { top:'oklch(0.78 0.12 '+hue+')', left:'oklch(0.63 0.125 '+hue+')', right:'oklch(0.50 0.105 '+hue+')', edge:'oklch(0.34 0.06 '+hue+')' };
+  }
+  function swatch(hue){ return 'oklch('+(dark?0.62:0.6)+' 0.15 '+hue+')'; }
+  function plateFor(hue){ return dark ? 'oklch(0.31 0.05 '+hue+' / .5)' : 'oklch(0.90 0.05 '+hue+' / .5)'; }
+
+  var minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  function track(p){ if(p.x<minX)minX=p.x; if(p.x>maxX)maxX=p.x; if(p.y<minY)minY=p.y; if(p.y>maxY)maxY=p.y; }
+  function P(gx,gy,z){ var p=proj(gx,gy,z); track(p); return p; }
+  function pts(a){ return a.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' '); }
+  function ctr(n){ return { gx:n.gx+n.w/2, gy:n.gy+n.d/2 }; }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  var floorSVG='',plateSVG='',edgeSVG='',bldSVG='',flowSVG='',labelSVG='';
+
+  // overall grid extent (from placed nodes, padded)
+  var gxMax=0, gyMax=0;
+  Object.keys(N).forEach(function(id){ var n=N[id]; gxMax=Math.max(gxMax,n.gx+n.w); gyMax=Math.max(gyMax,n.gy+n.d); });
+  var GX0=-2,GX1=gxMax+2,GY0=-2,GY1=gyMax+2;
+  var gridColor = dark?'oklch(0.34 0.03 250 / .85)':'oklch(0.80 0.01 250 / .8)';
+  for(var gx=GX0;gx<=GX1;gx++){ var a=P(gx,GY0,0),b=P(gx,GY1,0); floorSVG+='<line x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'" stroke="'+gridColor+'" stroke-width="1"/>'; }
+  for(var gy=GY0;gy<=GY1;gy++){ var c=P(GX0,gy,0),d=P(GX1,gy,0); floorSVG+='<line x1="'+c.x.toFixed(1)+'" y1="'+c.y.toFixed(1)+'" x2="'+d.x.toFixed(1)+'" y2="'+d.y.toFixed(1)+'" stroke="'+gridColor+'" stroke-width="1"/>'; }
+
+  // district plates + labels
+  Object.keys(G).forEach(function(g){
+    var members = Object.keys(N).filter(function(id){ return N[id].group===g; });
+    if(!members.length) return;
+    var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    members.forEach(function(id){ var n=N[id]; x0=Math.min(x0,n.gx); y0=Math.min(y0,n.gy); x1=Math.max(x1,n.gx+n.w); y1=Math.max(y1,n.gy+n.d); });
+    var pd=0.6; x0-=pd;y0-=pd;x1+=pd;y1+=pd;
+    var poly=[P(x0,y0,0),P(x1,y0,0),P(x1,y1,0),P(x0,y1,0)];
+    plateSVG+='<polygon points="'+pts(poly)+'" fill="'+plateFor(G[g].hue)+'" stroke="'+plateFor(G[g].hue)+'" stroke-width="1"/>';
+    var lp=P(x0+0.15,y0-0.05,0);
+    labelSVG+='<text x="'+lp.x.toFixed(1)+'" y="'+(lp.y-6).toFixed(1)+'" font-family="var(--mono)" font-size="11" letter-spacing="2" fill="var(--ink-2)">'+esc(G[g].label.toUpperCase())+'</text>';
+  });
+
+  // edges (elbow: horizontal then vertical), drawn under buildings
+  var pathData={};
+  E.forEach(function(e,i){
+    if(!N[e[0]]||!N[e[1]]) return;
+    var a=ctr(N[e[0]]),b=ctr(N[e[1]]);
+    var sp=[a,{gx:b.gx,gy:a.gy},b].map(function(w){ return P(w.gx,w.gy,0.35); });
+    var dstr='M'+sp[0].x.toFixed(1)+' '+sp[0].y.toFixed(1)+' L'+sp[1].x.toFixed(1)+' '+sp[1].y.toFixed(1)+' L'+sp[2].x.toFixed(1)+' '+sp[2].y.toFixed(1);
+    pathData['p'+i]=dstr;
+    var run=e[2]==='run', col=run?'var(--accent)':'var(--mute)', w=run?2:1.3, dash=run?'':' stroke-dasharray="5 4"';
+    edgeSVG+='<path class="edge-line" data-from="'+e[0]+'" data-to="'+e[1]+'" id="p'+i+'" d="'+dstr+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round" opacity="'+(run?0.85:0.6)+'"'+dash+'/>';
+  });
+
+  // buildings, back-to-front by depthKey = gx+w+gy+d
+  var order=Object.keys(N).sort(function(k1,k2){ var a=N[k1],b=N[k2]; return (a.gx+a.w+a.gy+a.d)-(b.gx+b.w+b.gy+b.d); });
+  order.forEach(function(k){
+    var n=N[k], f=facesFor(G[n.group].hue), gx=n.gx, gy=n.gy, w=n.w, d=n.d, h=n.h;
+    var A=P(gx,gy,0),B=P(gx+w,gy,0),C=P(gx+w,gy+d,0),D=P(gx,gy+d,0);
+    var At=P(gx,gy,h),Bt=P(gx+w,gy,h),Ct=P(gx+w,gy+d,h),Dt=P(gx,gy+d,h);
+    bldSVG+='<g class="node" id="b-'+k+'" data-id="'+k+'">'
+      + '<polygon points="'+pts([Dt,Ct,C,D])+'" fill="'+f.left+'" stroke="'+f.edge+'" stroke-width="1" stroke-linejoin="round"/>'
+      + '<polygon points="'+pts([Bt,Ct,C,B])+'" fill="'+f.right+'" stroke="'+f.edge+'" stroke-width="1" stroke-linejoin="round"/>'
+      + '<polygon points="'+pts([At,Bt,Ct,Dt])+'" fill="'+f.top+'" stroke="'+f.edge+'" stroke-width="1" stroke-linejoin="round"/>'
+      + '</g>';
+    var top=P(gx+w/2,gy+d/2,h), label=n.name, tw=label.length*6.6+16;
+    labelSVG+='<g class="lbl" transform="translate('+top.x.toFixed(1)+','+(top.y-14).toFixed(1)+')" style="pointer-events:none">'
+      + '<rect x="'+(-tw/2).toFixed(1)+'" y="-13" width="'+tw.toFixed(1)+'" height="19" rx="4" fill="var(--pill)" stroke="var(--line)" stroke-width="0.75"/>'
+      + '<text x="0" y="0" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--pill-ink)">'+esc(label)+'</text>'
+      + '</g>';
+  });
+
+  if(!reduce){
+    E.forEach(function(e,i){
+      if(!pathData['p'+i]) return;
+      var run=e[2]==='run', col=run?'var(--accent)':'var(--mute)', r=run?4.2:3.2, dur=run?3.2:4.6, begin=(i*0.5).toFixed(2);
+      flowSVG+='<circle class="payload" data-from="'+e[0]+'" data-to="'+e[1]+'" r="'+r+'" fill="'+col+'">'
+        + '<animateMotion dur="'+dur+'s" begin="'+begin+'s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear" path="'+pathData['p'+i]+'"/>'
+        + '<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.88;1" dur="'+dur+'s" begin="'+begin+'s" repeatCount="indefinite"/>'
+        + '</circle>';
+    });
+  }
+
+  var pad=48;
+  var baseVB={ x:minX-pad, y:minY-pad, w:(maxX-minX)+pad*2, h:(maxY-minY)+pad*2 };
+  var vb={ x:baseVB.x, y:baseVB.y, w:baseVB.w, h:baseVB.h };
+  var svg=document.getElementById('scene');
+  svg.insertAdjacentHTML('beforeend', floorSVG+plateSVG+edgeSVG+bldSVG+flowSVG+labelSVG);
+  function applyVB(){ svg.setAttribute('viewBox', vb.x.toFixed(1)+' '+vb.y.toFixed(1)+' '+vb.w.toFixed(1)+' '+vb.h.toFixed(1)); }
+  applyVB();
+
+  // header text
+  document.getElementById('title').textContent = DATA.title || 'Architecture map';
+  if(DATA.subtitle) document.getElementById('mark').textContent = DATA.subtitle;
+  document.title = DATA.title || 'Architecture map';
+
+  // ---- selection + panel ----
+  var panel=document.getElementById('panel'), selected=null;
+  var payloads=[].slice.call(svg.querySelectorAll('.payload'));
+
+  function renderOverview(){
+    selected=null; svg.classList.remove('has-sel');
+    [].forEach.call(svg.querySelectorAll('.node.sel'),function(e){e.classList.remove('sel');});
+    [].forEach.call(svg.querySelectorAll('.edge-line.hot'),function(e){e.classList.remove('hot');});
+    payloads.forEach(function(c){ c.style.display=''; });
+    var legend='';
+    Object.keys(G).forEach(function(g){ legend+='<li><span class="sw" style="background:'+swatch(G[g].hue)+'"></span>'+esc(G[g].label)+'</li>'; });
+    legend+='<li><span class="dot" style="background:var(--accent)"></span>primary flow (a run)</li>';
+    legend+='<li><span class="dot" style="background:var(--mute)"></span>service dependency</li>';
+    var ov=DATA.overview||{}, nodeCount=Object.keys(N).length, grpCount=Object.keys(G).length;
+    var intro=(ov.intro||['A map of '+nodeCount+' subsystems across '+grpCount+' districts. Building height tracks each subsystem’s weight.']).map(function(p){return '<p>'+esc(p)+'</p>';}).join('');
+    var steps=(ov.steps||[]).map(function(s){ return '<li><b>'+esc(s.title)+'</b> — '+esc(s.text)+'</li>'; }).join('');
+    panel.innerHTML=
+      '<p class="p-kicker" style="color:var(--accent)">Overview</p>'
+      + '<h2 class="p-title">'+esc(DATA.title||'The system, at a glance')+'</h2>'
+      + '<p class="p-role">'+nodeCount+' subsystems · '+grpCount+' districts</p>'
+      + '<div class="p-body">'+intro+'</div>'
+      + '<div class="sec-h">Legend</div><ul class="legend">'+legend+'</ul>'
+      + (steps ? '<div class="sec-h">How it flows</div><ol class="mini">'+steps+'</ol>' : '')
+      + '<div class="sec-h" style="margin-top:26px">Tip</div>'
+      + '<p style="font-size:13px;color:var(--ink-2);font-family:var(--mono);line-height:1.6">Click any building to isolate it and see what it owns and how it connects. Scroll to zoom, drag to pan.</p>';
+  }
+
+  function connections(id){
+    var down=[],up=[];
+    E.forEach(function(e){ if(e[0]===id&&N[e[1]]) down.push({id:e[1],verb:e[3]||'',type:e[2]}); if(e[1]===id&&N[e[0]]) up.push({id:e[0],verb:e[3]||'',type:e[2]}); });
+    return {down:down,up:up};
+  }
+
+  function renderNode(id){
+    var n=N[id]; if(!n) return; selected=id;
+    svg.classList.add('has-sel');
+    [].forEach.call(svg.querySelectorAll('.node.sel'),function(e){e.classList.remove('sel');});
+    var g=document.getElementById('b-'+id); if(g) g.classList.add('sel');
+    var c=connections(id), hot={};
+    c.down.forEach(function(x){hot[id+'>'+x.id]=1;}); c.up.forEach(function(x){hot[x.id+'>'+id]=1;});
+    [].forEach.call(svg.querySelectorAll('.edge-line'),function(p){ p.classList.toggle('hot', !!hot[p.getAttribute('data-from')+'>'+p.getAttribute('data-to')]); });
+    payloads.forEach(function(cir){ cir.style.display = hot[cir.getAttribute('data-from')+'>'+cir.getAttribute('data-to')] ? '' : 'none'; });
+    function list(arr,dir){
+      if(!arr.length) return '<p style="font-size:12.5px;color:var(--ink-2);font-family:var(--mono)">— none —</p>';
+      return '<ul class="conn">'+arr.map(function(x){ return '<li data-goto="'+x.id+'"><span class="arw">'+(dir==='down'?'→':'←')+'</span>'+esc(N[x.id].name)+'<span class="verb">'+esc(x.verb)+(x.type==='dep'?' · dep':'')+'</span></li>'; }).join('')+'</ul>';
+    }
+    panel.innerHTML=
+      '<button class="backbtn" id="back">← back to overview</button>'
+      + '<p class="p-kicker" style="color:'+swatch(G[n.group].hue)+'">'+esc(G[n.group].label)+'</p>'
+      + '<h2 class="p-title">'+esc(n.name)+'</h2>'
+      + '<p class="p-role">'+esc(n.role||'')+(n.role?' · ':'')+n.h+' storeys</p>'
+      + (n.tech?'<span class="tag">'+esc(n.tech)+'</span>':'')
+      + '<div class="p-body">'+((n.owns||[]).map(function(p){return '<p>'+esc(p)+'</p>';}).join(''))+'</div>'
+      + '<div class="sec-h">Sends to</div>'+list(c.down,'down')
+      + '<div class="sec-h">Receives from</div>'+list(c.up,'up');
+    document.getElementById('back').addEventListener('click', renderOverview);
+    [].forEach.call(panel.querySelectorAll('[data-goto]'),function(li){ li.addEventListener('click',function(){ renderNode(li.getAttribute('data-goto')); }); });
+  }
+
+  // ---- pointer: pan + click-to-select (no pointer capture, so clicks survive) ----
+  function clientToSvg(cx,cy){ var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; var m=svg.getScreenCTM(); if(!m) return {x:vb.x+vb.w/2,y:vb.y+vb.h/2}; var l=pt.matrixTransform(m.inverse()); return {x:l.x,y:l.y}; }
+  function clampW(w){ var minW=baseVB.w*0.22, maxW=baseVB.w*2.6; return Math.max(minW, Math.min(maxW, w)); }
+  function zoomAt(cx,cy,factor){ var loc=clientToSvg(cx,cy), newW=clampW(vb.w*factor), s=newW/vb.w; vb.x=loc.x-(loc.x-vb.x)*s; vb.y=loc.y-(loc.y-vb.y)*s; vb.w*=s; vb.h*=s; applyVB(); }
+  svg.addEventListener('wheel',function(e){ e.preventDefault(); zoomAt(e.clientX,e.clientY, e.deltaY<0?0.88:1.14); }, {passive:false});
+
+  var dragging=false, dragMoved=false, sx=0, sy=0, svx=0, svy=0, ctmScale=1, downNode=null;
+  svg.addEventListener('pointerdown',function(e){ dragging=true; dragMoved=false; sx=e.clientX; sy=e.clientY; svx=vb.x; svy=vb.y; var m=svg.getScreenCTM(); ctmScale=(m&&m.a)?m.a:(svg.getBoundingClientRect().width/vb.w); downNode=(e.target&&e.target.closest)?e.target.closest('.node'):null; svg.classList.add('grabbing'); });
+  window.addEventListener('pointermove',function(e){ if(!dragging) return; if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>5) dragMoved=true; vb.x=svx-(e.clientX-sx)/ctmScale; vb.y=svy-(e.clientY-sy)/ctmScale; applyVB(); });
+  window.addEventListener('pointerup',function(){ if(!dragging) return; dragging=false; svg.classList.remove('grabbing'); if(!dragMoved&&downNode) renderNode(downNode.getAttribute('data-id')); downNode=null; });
+
+  document.getElementById('zin').addEventListener('click',function(){ var r=svg.getBoundingClientRect(); zoomAt(r.left+r.width/2,r.top+r.height/2,0.8); });
+  document.getElementById('zout').addEventListener('click',function(){ var r=svg.getBoundingClientRect(); zoomAt(r.left+r.width/2,r.top+r.height/2,1.25); });
+  document.getElementById('zreset').addEventListener('click',function(){ vb={x:baseVB.x,y:baseVB.y,w:baseVB.w,h:baseVB.h}; applyVB(); renderOverview(); });
+
+  renderOverview();
+})();
+</script>
+</body>
+</html>
