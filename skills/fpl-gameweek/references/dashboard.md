@@ -6,7 +6,25 @@
 python3 scripts/build_dashboard.py
 ```
 
-The build injects the merged ledger into the template at the `/*__DATA__*/ null` marker and writes `dashboard.html`. Republish with the Artifact tool using the **same file path** to keep the URL. Record that URL in the project's `CLAUDE.md` so later sessions update the same artifact instead of creating a new one.
+The build injects the merged ledger into the template at the `/*__DATA__*/ null` marker and writes `dashboard.html`. Republish with the Artifact tool using the **same file path** to keep the URL:
+
+https://claude.ai/code/artifact/15f3525e-a095-4f7f-8b3a-7aac4f3ab4e6
+
+## Publishing is two destinations
+
+Every rebuild goes to both, always in this order:
+
+1. **The artifact** — `Artifact` on the same file path, which keeps the URL stable.
+2. **The site** — the dashboard is also a page on the project's own site. Copy the built file in, check it against the host repo's contract, commit on the FPL branch and open or update a PR. Never mint a new artifact link for the site: the artifact is where the page is built, the site path is where it is read.
+
+The site contract, which the publish script enforces and refuses to commit without:
+
+- one standalone file, no build step, no sibling assets; Google Fonts are the only external request
+- under 500KB, since it is committed to the site repo and served on every visit
+- no artifact frame-runtime block — an export from claude.ai carries one between `<!-- frame-runtime -->` markers that postMessages to a parent and imports `/_runtime/*.js`. Neither exists off-site, so it throws on every load. Strip it with a regex even when the file is generated locally and should not have one
+- respects `prefers-color-scheme` — a bright page inside a dark site shell reads as a bug
+
+Read the host repo's own plan document before the first publish; it states where the file goes and whether the route expects HTML or React. The rule of thumb it gives: stay with one HTML file while the layout is still moving, move to React once two consecutive updates change only the numbers.
 
 ## Verify before publishing
 
