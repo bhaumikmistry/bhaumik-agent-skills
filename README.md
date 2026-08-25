@@ -62,6 +62,28 @@ Fires on: "architecture diagram", "system map", "codebase overview", "show me
 how this works", "visualize this design". Open `assets/architecture-map.html`
 to see a complete worked example (an RPA browser-automation platform).
 
+### fpl-gameweek
+
+Fantasy Premier League gameweek cycle. Runs the whole loop in a fixed order, because the opposition read is an input to the plan rather than a report about it.
+
+| Step | Trigger | What it does |
+|------|---------|--------------|
+| **Score** | gameweek settles | Scores every plan against the real result — including the ones not played — with autosubs applied |
+| **Study** | after scoring | Pulls every league, studies the top finishers, builds a player board of who delivered |
+| **Read** | after the study | Writes what worked, what did not, and what it changes, with the survivorship caveat stated |
+| **Strategy** | before planning | Squad-weighted fixture difficulty five to six weeks out, a stance per week, chip timing |
+| **Plan** | last | Three ranked plans — no hit, -4, -8 — each citing the read |
+| **Publish** | after any change | Rebuilds and republishes the dashboard artifact |
+
+Techniques that make it work:
+
+- **Strip the chips before comparing.** Rescore every rival normally — no bench boost, no triple captain. A 67-point gap became 22 once the chips came out, and half the "leaders" had picked a worse squad.
+- **Bench before transfer.** A flagged player is only a problem if he has to start. Benching one cost 0.1 expected points; the other, with no cover, cost 2.6. Same transfer, twenty-six times the effect.
+- **Judgement, not optimizers.** A scoring formula was tried and never bought the highest-scoring player in the game, because price penalised him in the z-score. Scripts fetch, check constraints and render; people pick.
+- **Score the counterfactuals.** Every plan is scored after the fact, so over a season the record shows whether the hits were worth taking.
+
+Needs the `fpl` MCP server (`uv tool install fpl-mcp`) with an authenticated FPL account.
+
 ### not-ai
 
 Rewrites text to strip the patterns that make writing sound machine-generated. Uses an anti-pattern catalog derived from Wikipedia's "Signs of AI writing" as the rubric.
