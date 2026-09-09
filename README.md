@@ -84,6 +84,29 @@ Techniques that make it work:
 
 Needs the `fpl` MCP server (`uv tool install fpl-mcp`) with an authenticated FPL account.
 
+### ui-craft
+
+Build interfaces that do not read as agent-generated. Three tools, each covering
+what the others miss.
+
+| Step | What happens |
+|------|--------------|
+| **Ground** | Read `DESIGN.md` / `PRODUCT.md` and the real token file before writing anything |
+| **Reuse** | `npx shadcn@latest add <name>` — writing your own Dialog or Combobox is a bug |
+| **Adapt** | Retheme to the project's tokens in the same commit; a raw shadcn paste is the tell |
+| **Build** | Only when the catalogue genuinely has nothing, and to a stated bar |
+| **Check** | `npx impeccable detect` — 61 deterministic rules, no API key, no model |
+| **Publish** | Registry item → GitHub → the shadcn community directory, in that order |
+
+The slop rules worth knowing before you start: no pure black or grey (tint
+neutrals), no grey text on coloured backgrounds, not everything is a card and
+never a card inside a card, avoid Inter/Arial/system defaults unless chosen for
+a reason, no bounce or elastic easing.
+
+- shadcn/ui: https://ui.shadcn.com/docs/components
+- Impeccable: https://impeccable.style · https://github.com/pbakaus/impeccable
+- Registries: https://ui.shadcn.com/docs/registry
+
 ### not-ai
 
 Rewrites text to strip the patterns that make writing sound machine-generated. Uses an anti-pattern catalog derived from Wikipedia's "Signs of AI writing" as the rubric.

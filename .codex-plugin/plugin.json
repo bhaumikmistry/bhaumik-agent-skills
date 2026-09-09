@@ -2,7 +2,7 @@
   "name": "bhaumik",
   "displayName": "Bhaumik: Personal Skills",
   "version": "0.3.0",
-  "description": "Agent skills: communication coaching, message drafting, interaction review, async interview series management, AI-voice detection/rewriting, interactive isometric architecture maps, verified Arsenal match write-ups, and the Fantasy Premier League gameweek cycle.",
+  "description": "Agent skills: communication coaching, message drafting, interaction review, async interview series management, AI-voice detection/rewriting, interactive isometric architecture maps, verified Arsenal match write-ups, the Fantasy Premier League gameweek cycle, and UI craft with shadcn/ui, Impeccable and a publishable component registry.",
   "author": {
     "name": "Bhaumik Mistry",
     "url": "https://github.com/bhaumikmistry"
