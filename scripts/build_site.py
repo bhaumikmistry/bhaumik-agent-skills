@@ -22,9 +22,32 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from site_content import SKILLS, EXAMPLES  # noqa: E402
 
+REPO = "https://github.com/bhaumikmistry/bhaumik-agent-skills"
+TREE = REPO + "/tree/main"
+BLOB = REPO + "/blob/main"   # GitHub serves single files under /blob, not /tree
+
+
+def ext(href, text, cls=""):
+    """Outbound link. Opens in a new tab so the page is not lost, and carries
+    rel=noopener because target=_blank without it hands the opened page a
+    window.opener reference back into this one."""
+    c = f' class="{cls}"' if cls else ""
+    return f'<a href="{href}" target="_blank" rel="noopener"{c}>{text}</a>'
+
+
 FONTS = ("https://fonts.googleapis.com/css2?"
          "family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,600;12..96,800"
          "&family=Spline+Sans+Mono:wght@400;600&display=swap")
+
+
+WORDS = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven",
+         8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven", 12: "Twelve"}
+
+
+def spelled(n):
+    """Numbers under thirteen read better spelled out in a headline; past that
+    the digit is clearer. Derived from the skill count, never typed in."""
+    return WORDS.get(n, str(n))
 
 
 def read_skills():
@@ -121,7 +144,17 @@ section>.wrap>h2{font-size:clamp(1.7rem,3.4vw,2.4rem);max-width:26ch}
   border-left:2.5px solid var(--spot);font-size:0.92rem}
 .rule-note b{display:block;font-family:var(--mono);font-size:0.78rem;
   letter-spacing:0.04em;color:var(--spot);margin-bottom:5px;font-weight:600}
-.refs{margin-top:13px;font-family:var(--mono);font-size:0.8rem;color:var(--ink-soft)}
+.refs{margin-top:13px;font-family:var(--mono);font-size:0.8rem;color:var(--ink-soft);
+  display:flex;gap:16px;justify-content:space-between;align-items:baseline;flex-wrap:wrap}
+.refs .src{white-space:nowrap;font-weight:600}
+.mnav{font-family:var(--mono);font-size:0.8rem}
+.mnav a{text-decoration:none;border-bottom:1.5px solid var(--spot);padding-bottom:1px}
+.cta{margin-top:30px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.cmd{margin-top:0}
+.ghlink{font-family:var(--mono);font-size:0.85rem;font-weight:600;white-space:nowrap}
+.ex .foot .links{display:flex;gap:15px;white-space:nowrap}
+.tree a{text-decoration:none;border-bottom:1px solid var(--rule)}
+.tree a:hover{border-bottom-color:var(--spot)}
 
 .ex{display:grid;grid-template-columns:repeat(2,1fr);gap:26px;margin-top:34px}
 .ex article{border:1.5px solid var(--ink);display:flex;flex-direction:column;background:var(--band)}
@@ -161,8 +194,11 @@ footer a{color:var(--ink)}
 
 def entry(i, key, meta):
     c = SKILLS[key]
-    refs = (f'<div class="refs">references/ {" · ".join(r.replace(".md", "") for r in meta["refs"])}</div>'
+    refs = (f'references/ {" · ".join(r.replace(".md", "") for r in meta["refs"])}'
             if meta["refs"] else "")
+    src = ext(f"{TREE}/skills/{key}", "Read the skill &rarr;", "src")
+    foot = f'<div class="refs"><span>{refs}</span>{src}</div>'
+
     ver = f' · v{meta["version"]}' if meta["version"] else ""
     return f"""<article class="entry">
   <div>
@@ -174,7 +210,7 @@ def entry(i, key, meta):
   <div class="body">
     <p>{escape(c["body"])}</p>
     <div class="rule-note"><b>THE RULE IT WILL NOT BEND</b>{escape(c["rule"])}</div>
-    {refs}
+    {foot}
   </div>
 </article>"""
 
@@ -189,7 +225,8 @@ def example(e):
     <p class="dir">{escape(e['direction'])}</p>
     <p class="note">{escape(e['note'])}</p>
     <div class="foot"><span>Set in {escape(e['face'])}</span>
-      <a href="examples/{e['file']}">Open the page &rarr;</a></div>
+      <span class="links">{ext(f"{BLOB}/examples/{e['file']}", "Source")}
+      {ext("examples/" + e['file'], "Open the page &rarr;")}</span></div>
   </div>
 </article>"""
 
@@ -208,7 +245,7 @@ def build():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>bhaumik-agent-skills &mdash; {n} working methods, written down</title>
+<title>bhaumik-agent-skills &mdash; {n} skills for Claude Code</title>
 <meta name="description" content="A collection of agent skills for Claude Code: a working method per skill, each with the trigger that fires it and the rule it will not bend.">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="{FONTS}" rel="stylesheet">
@@ -218,14 +255,18 @@ def build():
 <header class="masthead"><div class="wrap">
   <div class="wordmark">bhaumik<b>/</b>agent-skills</div>
   <div class="meta">{n} SKILLS &middot; CLAUDE CODE &middot; MIT</div>
+  <nav class="mnav">{ext(REPO, "GitHub &nearr;")}</nav>
 </div></header>
 
 <div class="hero"><div class="wrap">
-  <h1>Seven working methods,<br>written down so they <em>survive the session</em>.</h1>
+  <h1>{spelled(n)} skills.<br>Each one a working method that <em>survives the session</em>.</h1>
   <p class="lede">A skill is not a prompt. It is a procedure with an order, a set of
   rules it refuses to break, and a record of what went wrong last time. These are the
   ones that earned their place by being used more than once.</p>
-  <div class="cmd"><span>$</span> npx skills add bhaumikmistry/bhaumik-agent-skills</div>
+  <div class="cta">
+    <div class="cmd"><span>$</span> npx skills add bhaumikmistry/bhaumik-agent-skills</div>
+    {ext(REPO, "Browse the source &nearr;", "ghlink")}
+  </div>
 </div></div>
 
 <section><div class="wrap">
@@ -254,7 +295,7 @@ def build():
 
 <section><div class="wrap">
   <div class="eyebrow">THE SKILLS</div>
-  <h2>Seven of them, and what each one refuses to do.</h2>
+  <h2>{spelled(n).lower().capitalize()} of them, and what each one refuses to do.</h2>
   {entries}
 </div></section>
 
@@ -280,21 +321,22 @@ def build():
   and the procedure the agent follows. Anything long enough to be a distraction on
   every invocation &mdash; a schema, a catalogue, a scoring method &mdash; goes into
   <code>references/</code> and is read only when that step is reached.</p></div>
-  <div class="tree">skills/<br>
+  <div class="tree">{ext(TREE + "/skills", "skills/")}<br>
   &nbsp;&nbsp;<b>ui-craft/</b><br>
   &nbsp;&nbsp;&nbsp;&nbsp;SKILL.md<br>
   &nbsp;&nbsp;&nbsp;&nbsp;references/<br>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shadcn.md &nbsp;impeccable.md &nbsp;new-component.md<br>
-  <b>examples/</b> &nbsp;&larr; the four pages above<br>
-  <b>scripts/</b> &nbsp;&nbsp;build_site.py &nbsp;site_content.py<br>
+  {ext(TREE + "/examples", "<b>examples/</b>")} &nbsp;&larr; the four pages above<br>
+  {ext(TREE + "/scripts", "<b>scripts/</b>")} &nbsp;&nbsp;build_site.py &nbsp;site_content.py<br>
   index.html &nbsp;&larr; generated, never edited by hand</div>
 </div></section>
 
 <footer><div class="wrap">
   This page is generated by <code>scripts/build_site.py</code> from the skills themselves,
   so it cannot drift. Adding a skill without documenting it fails the build.<br>
-  <a href="https://github.com/bhaumikmistry/bhaumik-agent-skills">github.com/bhaumikmistry/bhaumik-agent-skills</a>
-  &nbsp;&middot;&nbsp; <a href="https://www.bhaumikmistry.com">bhaumikmistry.com</a>
+  {ext(REPO, "github.com/bhaumikmistry/bhaumik-agent-skills")}
+  &nbsp;&middot;&nbsp; {ext("https://www.bhaumikmistry.com", "bhaumikmistry.com")}
+  &nbsp;&middot;&nbsp; {ext(REPO + "/blob/main/CLAUDE.md", "CLAUDE.md")}
 </div></footer>
 </body>
 </html>

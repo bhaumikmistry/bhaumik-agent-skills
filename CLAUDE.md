@@ -44,6 +44,24 @@ build, and do what it tells you.
    python3 -m http.server 8933   # then actually look at it, including at 375px
    ```
 
+## Never type a count into the copy
+
+The headline and section headers derive the number of skills from the directory
+listing via `spelled()`. Writing "Seven" into the prose is how a generated page
+starts lying: it survives exactly until the eighth skill lands. If you need the
+count anywhere new, use `{spelled(n)}` or `{n}`, never the word.
+
+## Links
+
+Every outbound link goes through `ext()` in `build_site.py`, which adds
+`target="_blank"` and `rel="noopener"`. Do not hand-write an `<a>` — the rel is
+not decoration, `target="_blank"` without it hands the opened page a
+`window.opener` reference back into this one.
+
+GitHub serves directories under `/tree/main` and single files under
+`/blob/main`. The constants are `TREE` and `BLOB`; using the wrong one still
+resolves via redirect, which is how it stays wrong unnoticed.
+
 ## Changing a skill's description
 
 `SKILL.md` frontmatter feeds the page directly, so a description edit needs a
