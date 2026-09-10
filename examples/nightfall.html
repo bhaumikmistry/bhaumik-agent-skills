@@ -1,0 +1,1488 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nightfall — moth recording that shows its working</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------
+   Nightfall — design system
+   Direction: a night-lit field ledger. The model speaks in cold
+   actinic blue; the recorder's own determination is warm lamp amber.
+   Uncertainty is drawn as hatching, never rounded off into a number.
+   Neutrals are tinted toward the green of a garden at 2am — no pure
+   black, no pure grey, no pure white.
+   Type: Newsreader (entomological monographs and county reports are
+   set in serif; this is a records page, not a dashboard) with
+   IBM Plex Mono for anything a database will read back.
+   ------------------------------------------------------------------ */
+
+:root {
+  /* neutrals, tinted green-blue toward the accent */
+  --ink-900: #0b100e;
+  --ink-850: #0f1614;
+  --ink-800: #131b18;
+  --ink-750: #18211e;
+  --ink-700: #1e2925;
+  --rule:    #26332e;
+  --rule-soft: #1b2421;
+
+  --text:    #e8eae2;
+  --text-2:  #aab5ab;
+  --text-3:  #7f8b82;
+
+  /* the two lights. amber = the trap and the human. blue = the model. */
+  --lamp:      #eaa93f;
+  --lamp-dim:  #8a6428;
+  --lamp-wash: #2a2013;
+
+  --actinic:      #7db3d4;
+  --actinic-dim:  #3c6076;
+  --actinic-wash: #131f27;
+
+  --alarm: #d98063;
+
+  --measure: 34rem;
+  --gutter: clamp(1.15rem, 4.5vw, 3.5rem);
+  --shell: 68rem;
+
+  --s1: .3rem;  --s2: .55rem; --s3: .9rem;  --s4: 1.4rem;
+  --s5: 2.1rem; --s6: 3.2rem; --s7: 4.8rem; --s8: 7rem;
+
+  --f-xs: .72rem;
+  --f-sm: .82rem;
+  --f-base: 1.03rem;
+  --f-lg: 1.2rem;
+  --f-xl: clamp(1.35rem, 1rem + 1.5vw, 1.85rem);
+  --f-2xl: clamp(1.7rem, 1.1rem + 2.8vw, 2.7rem);
+  --f-3xl: clamp(2.3rem, 1.2rem + 5vw, 4.1rem);
+
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --hatch-uncertain: repeating-linear-gradient(
+      135deg, var(--actinic-dim) 0 2px, transparent 2px 6px);
+  --hatch-none: repeating-linear-gradient(
+      135deg, var(--text-3) 0 1px, transparent 1px 5px);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--ink-900);
+  color: var(--text);
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
+  font-size: var(--f-base);
+  font-weight: 400;
+  line-height: 1.62;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* faint lamp-glow at the top of the page — the light that draws them in */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20vh 0 auto 0;
+  height: 70vh;
+  background: radial-gradient(
+      58% 60% at 50% 0%,
+      rgba(234, 169, 63, .10) 0%,
+      rgba(125, 179, 212, .05) 42%,
+      transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+h1, h2, h3, h4 {
+  font-weight: 500;
+  line-height: 1.14;
+  letter-spacing: -.012em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p { margin: 0; }
+a { color: inherit; }
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  font-size: var(--f-xs);
+  font-weight: 500;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 0 var(--s3);
+}
+.eyebrow--lamp { color: var(--lamp); }
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  font-size: .92em;
+  font-variant-ligatures: none;
+}
+
+.sci { font-style: italic; }
+
+.lede {
+  font-size: var(--f-lg);
+  color: var(--text-2);
+  max-width: var(--measure);
+  line-height: 1.55;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--lamp);
+  color: var(--ink-900);
+  padding: var(--s2) var(--s4);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  z-index: 50;
+}
+.skip:focus { left: var(--gutter); top: var(--s2); }
+
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+/* ---------------------------------------------------------- masthead */
+
+.masthead {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding-block: var(--s4);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.mark {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--f-lg);
+  letter-spacing: -.02em;
+  text-decoration: none;
+}
+.mark svg { display: block; overflow: visible; }
+
+.masthead nav {
+  display: flex;
+  gap: var(--s4);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  color: var(--text-2);
+}
+.masthead nav a {
+  text-decoration: none;
+  padding-block: 2px;
+  border-bottom: 1px solid transparent;
+  transition: color .16s var(--ease), border-color .16s var(--ease);
+}
+.masthead nav a:hover { color: var(--text); border-bottom-color: var(--lamp); }
+@media (max-width: 42rem) { .masthead nav { display: none; } }
+
+/* ------------------------------------------------------------- hero */
+
+.hero { padding-block: clamp(var(--s6), 9vw, var(--s8)) var(--s6); }
+
+.hero h1 {
+  font-size: var(--f-3xl);
+  font-weight: 400;
+  max-width: 15ch;
+  letter-spacing: -.025em;
+}
+.hero h1 em {
+  font-style: italic;
+  color: var(--lamp);
+}
+
+.hero .lede { margin-top: var(--s4); }
+
+.hero-meta {
+  margin-top: var(--s5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s5);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  color: var(--text-3);
+}
+.hero-meta b { color: var(--text-2); font-weight: 500; }
+
+/* the standing claim, set apart as a rule-bounded statement */
+.tenet {
+  margin-top: var(--s6);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  border-left: 2px solid var(--lamp);
+  padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+}
+.tenet p {
+  font-size: var(--f-xl);
+  line-height: 1.34;
+  max-width: 30ch;
+  letter-spacing: -.014em;
+}
+.tenet .n {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  color: var(--lamp);
+  letter-spacing: .1em;
+  padding-top: .55em;
+}
+@media (max-width: 34rem) {
+  .tenet { padding: 1.25rem; }
+}
+
+/* --------------------------------------------------------- sections */
+
+section { padding-block: clamp(var(--s6), 8vw, var(--s7)); }
+
+.sec-head { max-width: 46rem; margin-bottom: var(--s5); }
+.sec-head h2 {
+  font-size: var(--f-2xl);
+  font-weight: 400;
+  letter-spacing: -.022em;
+}
+.sec-head p { margin-top: var(--s3); color: var(--text-2); max-width: var(--measure); }
+
+hr.rule {
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+  margin: 0;
+}
+
+/* ----------------------------------------------- determination demo */
+
+.demo { position: relative; }
+
+.demo > .pick {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.demo-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.6rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 1.6rem;
+}
+.demo-tabs label {
+  padding: 0 0 0.7rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--f-xs);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  cursor: pointer;
+  text-align: center;
+  border-bottom: 2px solid transparent;
+  transition: color .16s var(--ease), background-color .16s var(--ease);
+}
+.demo-tabs label:hover { color: var(--text-2); }
+
+#r1:checked ~ .demo-tabs label[for="r1"],
+#r2:checked ~ .demo-tabs label[for="r2"],
+#r3:checked ~ .demo-tabs label[for="r3"] {
+  color: var(--lamp);
+  border-bottom-color: var(--lamp);
+}
+#r1:focus-visible ~ .demo-tabs label[for="r1"],
+#r2:focus-visible ~ .demo-tabs label[for="r2"],
+#r3:focus-visible ~ .demo-tabs label[for="r3"] {
+  outline: 2px solid var(--lamp);
+  outline-offset: 3px;
+}
+
+.panel { display: none; }
+#r1:checked ~ .panels #p1,
+#r2:checked ~ .panels #p2,
+#r3:checked ~ .panels #p3 { display: block; }
+
+.panel-grid {
+  border: 1px solid var(--rule);
+  background: var(--ink-850);
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: 0;
+}
+@media (max-width: 46rem) {
+  .panel-grid { grid-template-columns: 1fr; }
+}
+
+.plate {
+  padding: 1.4rem;
+  border-right: 1px solid var(--rule);
+  background: var(--ink-800);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+@media (max-width: 46rem) {
+  .plate {
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: center;
+    text-align: center;
+  }
+}
+.plate svg {
+  width: 100%;
+  max-width: 17rem;
+  height: auto;
+  display: block;
+  margin-inline: auto;
+}
+.plate figcaption {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.determ { padding: 1.4rem; min-width: 0; }
+
+.determ h3 {
+  font-size: var(--f-lg);
+  font-weight: 500;
+}
+.determ h3 .sci { color: var(--text-2); font-weight: 400; }
+
+/* candidate rows: bar length = probability, fill texture = certainty */
+.cands { margin: var(--s4) 0 0; padding: 0; list-style: none; }
+.cands li { padding-block: var(--s2); border-top: 1px solid var(--rule-soft); }
+.cands li:first-child { border-top: 0; }
+
+.cand-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+.cand-name { font-size: var(--f-base); }
+.cand-name .vern { color: var(--text); }
+.cand-name .sci { color: var(--text-3); font-size: .9em; }
+.cand-p {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bar {
+  margin-top: var(--s1);
+  height: 7px;
+  background: var(--ink-700);
+  position: relative;
+  overflow: hidden;
+}
+.bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--actinic-dim);
+}
+/* solid = the model is confident and the answer is separable */
+.bar > i.solid { background: var(--actinic); }
+/* hatched = the model has weight here but the taxon cannot be split */
+.bar > i.hatched {
+  background: var(--actinic-wash);
+  background-image: var(--hatch-uncertain);
+  border-right: 1px solid var(--actinic-dim);
+}
+
+.verdict {
+  margin-top: var(--s4);
+  border-left: 2px solid var(--lamp);
+  padding: var(--s3) 0 var(--s3) var(--s4);
+  background: linear-gradient(90deg, var(--lamp-wash), transparent 70%);
+}
+.verdict--held { border-left-color: var(--text-3); background: none; }
+.verdict .k {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--lamp);
+  display: block;
+  margin-bottom: var(--s1);
+}
+.verdict--held .k { color: var(--text-3); }
+.verdict strong { font-weight: 500; }
+.verdict p + p { margin-top: var(--s2); color: var(--text-2); font-size: var(--f-sm); }
+
+.actions {
+  margin-top: var(--s4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.btn {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  letter-spacing: .02em;
+  padding: .5em 1em;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color .16s var(--ease), color .16s var(--ease), background-color .16s var(--ease);
+}
+.btn:hover { border-color: var(--lamp-dim); color: var(--text); }
+.btn--primary {
+  border-color: var(--lamp-dim);
+  background: var(--lamp-wash);
+  color: var(--lamp);
+}
+.btn--primary:hover { background: var(--lamp); color: var(--ink-900); border-color: var(--lamp); }
+
+/* ------------------------------------------------------ state legend */
+
+.states {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+.state {
+  background: var(--ink-850);
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.swatch { height: 10px; width: 100%; background: var(--ink-700); }
+.swatch.s-confirmed { background: var(--lamp); }
+.swatch.s-proposed { background: var(--actinic); }
+.swatch.s-agg {
+  background: var(--actinic-wash);
+  background-image: var(--hatch-uncertain);
+  border: 1px solid var(--actinic-dim);
+}
+.swatch.s-genus {
+  background: transparent;
+  background-image: var(--hatch-none);
+  border: 1px solid var(--rule);
+}
+.swatch.s-none { background: var(--ink-700); border: 1px dashed var(--rule); }
+.state h3 {
+  font-size: var(--f-base);
+  font-weight: 500;
+}
+.state h3 .code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  color: var(--text-3);
+  letter-spacing: .06em;
+  display: block;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.state p { font-size: var(--f-sm); color: var(--text-2); line-height: 1.55; }
+
+/* -------------------------------------------------------- data table */
+
+.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--f-sm);
+  min-width: 34rem;
+}
+caption {
+  text-align: left;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--f-sm);
+  letter-spacing: 0;
+  color: var(--text-3);
+  padding: 0.9rem 0.85rem 0.9rem 0;
+  background: var(--ink-850);
+  border-bottom: 1px solid var(--rule);
+}
+th, td {
+  text-align: left;
+  padding: 0.62rem 0.8rem 0.62rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: baseline;
+}
+thead th {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--f-xs);
+  font-weight: 500;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  background: var(--ink-850);
+  border-bottom-color: var(--rule);
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--ink-850); }
+td.num {
+  font-family: "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+td .sci { color: var(--text-3); display: block; font-size: .94em; }
+
+.tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  letter-spacing: .05em;
+  padding: .15em .5em;
+  border: 1px solid var(--rule);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.tag--you { border-color: var(--lamp-dim); color: var(--lamp); }
+.tag--agg {
+  border-color: var(--actinic-dim);
+  color: var(--actinic);
+  background-color: var(--actinic-wash);
+  background-image: var(--hatch-uncertain);
+}
+.tag--gen {
+  border-color: var(--actinic-dim);
+  color: var(--actinic);
+  background-color: var(--actinic-wash);
+}
+.tag--open { border-style: dashed; }
+
+/* ------------------------------------------------------- split pairs */
+
+.pairs { display: grid; gap: var(--s4); }
+.pair {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s3) var(--s4);
+  align-items: start;
+  padding: 0 0 1.5rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.pair:last-child { border-bottom: 0; padding-bottom: 0; }
+.pair ul { margin: 0; padding: 0; list-style: none; }
+.pair li { line-height: 1.45; }
+.pair li + li { margin-top: 2px; }
+.pair .vern { color: var(--text); }
+.pair .sci { color: var(--text-3); }
+.pair .why {
+  grid-column: 1 / -1;
+  font-size: var(--f-sm);
+  color: var(--text-2);
+  max-width: 48ch;
+}
+.pair .method {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--f-xs);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--actinic);
+  background-color: var(--actinic-wash);
+  border: 1px solid var(--actinic-dim);
+  padding: .3em .6em;
+  white-space: nowrap;
+}
+@media (max-width: 34rem) {
+  .pair { grid-template-columns: 1fr; }
+  .pair .method { justify-self: start; }
+}
+
+/* ------------------------------------------------------------ export */
+
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--s4);
+  counter-reset: step;
+}
+.step { border-top: 1px solid var(--rule); padding-top: var(--s3); }
+.step::before {
+  counter-increment: step;
+  content: counter(step, decimal-leading-zero);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  color: var(--lamp);
+  letter-spacing: .1em;
+  display: block;
+  margin-bottom: var(--s2);
+}
+.step h3 { font-size: var(--f-base); font-weight: 500; margin-bottom: var(--s1); }
+.step p { font-size: var(--f-sm); color: var(--text-2); line-height: 1.55; }
+
+.fields {
+  margin-top: var(--s5);
+  border: 1px solid var(--rule);
+  background: var(--ink-850);
+  padding: 1.4rem;
+  overflow-x: auto;
+}
+.fields pre {
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  line-height: 1.9;
+  color: var(--text-2);
+  white-space: pre;
+}
+.fields pre b { color: var(--text); font-weight: 500; }
+.fields pre .c { color: var(--text-3); }
+.fields pre .hl { color: var(--lamp); }
+
+/* --------------------------------------------------------- objections */
+
+.objections { display: grid; gap: 0; }
+.obj { border-top: 1px solid var(--rule); padding: 1.5rem 0; }
+.obj:last-child { border-bottom: 1px solid var(--rule); }
+.obj h3 {
+  font-size: var(--f-lg);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  max-width: 40ch;
+}
+.obj p {
+  margin-top: var(--s3);
+  color: var(--text-2);
+  max-width: 52ch;
+}
+.obj p strong { color: var(--text); font-weight: 500; }
+
+/* ------------------------------------------------------------- close */
+
+.close { padding-block: clamp(var(--s6), 8vw, var(--s7)); }
+.close p {
+  font-size: var(--f-xl);
+  line-height: 1.35;
+  max-width: 26ch;
+  letter-spacing: -.015em;
+}
+.close .lede { font-size: var(--f-base); margin-top: var(--s4); }
+
+.signup {
+  margin-top: var(--s5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  align-items: stretch;
+  max-width: 30rem;
+}
+.signup label {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.signup input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  background: var(--ink-850);
+  border: 1px solid var(--rule);
+  color: var(--text);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-sm);
+  padding: .68em .85em;
+}
+.signup input::placeholder { color: var(--text-3); }
+.signup input:focus { border-color: var(--lamp-dim); outline: none; }
+.signup input:focus-visible { outline: 2px solid var(--lamp); outline-offset: 1px; }
+.signup .note {
+  flex-basis: 100%;
+  font-size: var(--f-sm);
+  color: var(--text-3);
+  margin-top: var(--s1);
+}
+
+footer {
+  border-top: 1px solid var(--rule-soft);
+  padding-block: var(--s5) var(--s6);
+  font-size: var(--f-sm);
+  color: var(--text-3);
+}
+.footcols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--s4);
+}
+footer h4 {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--f-xs);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  font-weight: 500;
+  margin-bottom: var(--s2);
+}
+footer p { max-width: 40ch; line-height: 1.6; }
+footer .colophon { margin-top: var(--s5); max-width: 52ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="wrap">
+  <header class="masthead">
+    <a class="mark" href="#main">
+      <svg width="26" height="20" viewBox="0 0 26 20" role="img" aria-label="Nightfall">
+        <g fill="none" stroke="#eaa93f" stroke-width="1.1" stroke-linejoin="round">
+          <path d="M13 5.4 L4.2 2.1 C2.2 1.4 1 3 1.6 5 L4.6 12.2 C5.2 13.6 6.6 14 7.8 13.2 L13 9.6 Z"/>
+          <path d="M13 5.4 L21.8 2.1 C23.8 1.4 25 3 24.4 5 L21.4 12.2 C20.8 13.6 19.4 14 18.2 13.2 L13 9.6 Z"/>
+          <path d="M13 9.6 L8.4 14.6 C7.6 15.5 8 16.8 9.2 17.1 L13 18 Z"/>
+          <path d="M13 9.6 L17.6 14.6 C18.4 15.5 18 16.8 16.8 17.1 L13 18 Z"/>
+        </g>
+        <path d="M13 4.6 L13 18" stroke="#e8eae2" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M13 4.6 L10.6 1.4 M13 4.6 L15.4 1.4" stroke="#e8eae2" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <span>Nightfall</span>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#determination">Determination</a>
+      <a href="#states">Certainty</a>
+      <a href="#pairs">Hard pairs</a>
+      <a href="#export">Export</a>
+      <a href="#objections">Objections</a>
+    </nav>
+  </header>
+</div>
+
+<main id="main">
+
+  <div class="wrap">
+    <div class="hero">
+      <p class="eyebrow eyebrow--lamp">Light-trap recording</p>
+      <h1>The moth is on the eggbox at 5am. The record should not <em>die there</em>.</h1>
+      <p class="lede">
+        Nightfall is a recording app for people who run light traps. Photograph what
+        came in, get a shortlist of candidates with their odds shown honestly, confirm
+        or overrule it yourself, and send the night's tally to your county recorder in
+        the format they already use.
+      </p>
+      <p class="hero-meta">
+        <span><b>Coverage</b> · all macro-moths, 340 micros</span>
+        <span><b>Offline</b> · the garden has no signal</span>
+        <span><b>Export</b> · iRecord, MapMate, Living Record, CSV</span>
+      </p>
+
+      <div class="tenet">
+        <p>
+          The model is a shortlist, not a determination. It never signs a record.
+          You do — and where nobody can, the record says so and stays honest.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================ determination -->
+  <div class="wrap">
+    <section id="determination">
+      <div class="sec-head">
+        <p class="eyebrow">Determination</p>
+        <h2>Three specimens from one night in July. The app behaves differently for each.</h2>
+        <p>
+          Most photo-identification tools return a single answer and a percentage.
+          That is the wrong shape for moths, where a good proportion of the list
+          cannot be settled from a photograph at all. Nightfall returns a ranked
+          candidate set and an explicit decision about whether the set can be
+          collapsed.
+        </p>
+      </div>
+
+      <div class="demo" role="group" aria-label="Example determinations">
+        <input class="pick" type="radio" name="rec" id="r1" checked>
+        <input class="pick" type="radio" name="rec" id="r2">
+        <input class="pick" type="radio" name="rec" id="r3">
+
+        <div class="demo-tabs">
+          <label for="r1">Clear</label>
+          <label for="r2">Aggregate only</label>
+          <label for="r3">No determination</label>
+        </div>
+
+        <div class="panels">
+
+          <!-- ---------------------------------------------- specimen 1 -->
+          <div class="panel" id="p1">
+            <div class="panel-grid">
+              <figure class="plate">
+                <svg viewBox="0 0 200 150" role="img"
+                     aria-label="Stylised drawing of a hawk-moth at rest, wings swept back in a sharp delta.">
+                  <rect width="200" height="150" fill="#0f1614"/>
+                  <g stroke="#7f8b82" stroke-width="1" fill="none" opacity=".35">
+                    <path d="M0 130 H200 M0 20 H200 M20 0 V150 M180 0 V150"/>
+                  </g>
+                  <g transform="translate(100 78)">
+                    <path d="M0 -34 L-66 6 Q-72 22 -54 24 L-6 22 Z" fill="#2c2028" stroke="#c98da0" stroke-width="1.1"/>
+                    <path d="M0 -34 L66 6 Q72 22 54 24 L6 22 Z" fill="#2c2028" stroke="#c98da0" stroke-width="1.1"/>
+                    <path d="M-6 22 L-38 30 Q-44 40 -30 42 L-4 36 Z" fill="#3a2a2f" stroke="#c98da0" stroke-width=".9"/>
+                    <path d="M6 22 L38 30 Q44 40 30 42 L4 36 Z" fill="#3a2a2f" stroke="#c98da0" stroke-width=".9"/>
+                    <path d="M0 -36 L0 40" stroke="#e8eae2" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M0 -36 L-9 -48 M0 -36 L9 -48" stroke="#e8eae2" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M-52 -2 L-14 12 M52 -2 L14 12" stroke="#c98da0" stroke-width=".8" opacity=".8"/>
+                  </g>
+                  <text x="20" y="143" fill="#7f8b82" font-family="monospace" font-size="7">MV 125W · 02:14 · 16°C</text>
+                </svg>
+                <figcaption>
+                  Robinson trap, 125W MV<br>
+                  VC22 Berkshire · SU 4879<br>
+                  23 July 2026, 02:14
+                </figcaption>
+              </figure>
+
+              <div class="determ">
+                <h3>Elephant Hawk-moth <span class="sci">Deilephila elpenor</span></h3>
+                <ul class="cands">
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Elephant Hawk-moth</span>
+                        <span class="sci">Deilephila elpenor</span></span>
+                      <span class="cand-p">0.97 · separable</span>
+                    </div>
+                    <div class="bar"><i class="solid" style="width:97%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Small Elephant Hawk-moth</span>
+                        <span class="sci">Deilephila porcellus</span></span>
+                      <span class="cand-p">0.02 · separable</span>
+                    </div>
+                    <div class="bar"><i style="width:2%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Pine Hawk-moth</span>
+                        <span class="sci">Sphinx pinastri</span></span>
+                      <span class="cand-p">0.01 · separable</span>
+                    </div>
+                    <div class="bar"><i style="width:1%"></i></div>
+                  </li>
+                </ul>
+
+                <div class="verdict">
+                  <span class="k">Proposed for your confirmation</span>
+                  <p><strong>Deilephila elpenor.</strong> One candidate, a wide margin, and
+                     no British species it can be confused with at this size and colour.</p>
+                  <p>You still sign it. Nightfall's name goes in the record as the
+                     suggester, never as the determiner.</p>
+                </div>
+
+                <div class="actions">
+                  <button type="button" class="btn btn--primary">Confirm as elpenor</button>
+                  <button type="button" class="btn">Choose another</button>
+                  <button type="button" class="btn">Hold at genus</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ---------------------------------------------- specimen 2 -->
+          <div class="panel" id="p2">
+            <div class="panel-grid">
+              <figure class="plate">
+                <svg viewBox="0 0 200 150" role="img"
+                     aria-label="Stylised drawing of a small brown noctuid moth with a pale kidney mark on each forewing.">
+                  <rect width="200" height="150" fill="#0f1614"/>
+                  <g stroke="#7f8b82" stroke-width="1" fill="none" opacity=".35">
+                    <path d="M0 130 H200 M0 20 H200 M20 0 V150 M180 0 V150"/>
+                  </g>
+                  <g transform="translate(100 76)">
+                    <path d="M0 -26 L-54 4 Q-60 26 -40 30 L-5 24 Z" fill="#2a2620" stroke="#a99479" stroke-width="1.1"/>
+                    <path d="M0 -26 L54 4 Q60 26 40 30 L5 24 Z" fill="#2a2620" stroke="#a99479" stroke-width="1.1"/>
+                    <ellipse cx="-30" cy="4" rx="7" ry="5" fill="none" stroke="#d8c69f" stroke-width="1.2"/>
+                    <ellipse cx="30" cy="4" rx="7" ry="5" fill="none" stroke="#d8c69f" stroke-width="1.2"/>
+                    <path d="M-48 16 Q-26 10 -8 16 M48 16 Q26 10 8 16" stroke="#d8c69f" stroke-width=".9" fill="none" opacity=".7"/>
+                    <path d="M0 -28 L0 30" stroke="#e8eae2" stroke-width="3.4" stroke-linecap="round"/>
+                    <path d="M0 -28 L-8 -40 M0 -28 L8 -40" stroke="#e8eae2" stroke-width="1.4" stroke-linecap="round"/>
+                  </g>
+                  <text x="20" y="143" fill="#7f8b82" font-family="monospace" font-size="7">MV 125W · 01:38 · 16°C</text>
+                </svg>
+                <figcaption>
+                  Robinson trap, 125W MV<br>
+                  VC22 Berkshire · SU 4879<br>
+                  23 July 2026, 01:38
+                </figcaption>
+              </figure>
+
+              <div class="determ">
+                <h3>Common Rustic <span class="sci">Mesapamea secalis</span> agg.</h3>
+                <ul class="cands">
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Common Rustic</span>
+                        <span class="sci">Mesapamea secalis</span></span>
+                      <span class="cand-p">0.44 · not separable</span>
+                    </div>
+                    <div class="bar"><i class="hatched" style="width:44%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Lesser Common Rustic</span>
+                        <span class="sci">Mesapamea didyma</span></span>
+                      <span class="cand-p">0.39 · not separable</span>
+                    </div>
+                    <div class="bar"><i class="hatched" style="width:39%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Remm's Rustic</span>
+                        <span class="sci">Mesapamea remmi</span></span>
+                      <span class="cand-p">0.05 · not separable</span>
+                    </div>
+                    <div class="bar"><i class="hatched" style="width:5%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Dusky Brocade</span>
+                        <span class="sci">Apamea remissa</span></span>
+                      <span class="cand-p">0.04 · separable</span>
+                    </div>
+                    <div class="bar"><i style="width:4%"></i></div>
+                  </li>
+                </ul>
+
+                <div class="verdict">
+                  <span class="k">Collapsed to an aggregate</span>
+                  <p><strong>Mesapamea secalis agg.</strong> The top three cannot be split
+                     on external features by anyone, so ranking them is theatre.
+                     Nightfall adds their weight together and offers the aggregate,
+                     which is what the county recorder wants anyway.</p>
+                  <p>Dissected it? Enter the species and Nightfall marks the record
+                     <span class="mono">gen. det.</span> so it carries more weight in the dataset than a photograph ever could.</p>
+                </div>
+
+                <div class="actions">
+                  <button type="button" class="btn btn--primary">Confirm as secalis agg.</button>
+                  <button type="button" class="btn">I dissected this</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ---------------------------------------------- specimen 3 -->
+          <div class="panel" id="p3">
+            <div class="panel-grid">
+              <figure class="plate">
+                <svg viewBox="0 0 200 150" role="img"
+                     aria-label="Stylised drawing of a small worn grey moth with its wing markings largely rubbed away.">
+                  <rect width="200" height="150" fill="#0f1614"/>
+                  <g stroke="#7f8b82" stroke-width="1" fill="none" opacity=".35">
+                    <path d="M0 130 H200 M0 20 H200 M20 0 V150 M180 0 V150"/>
+                  </g>
+                  <g transform="translate(100 78)">
+                    <path d="M0 -22 L-44 2 Q-50 22 -32 26 L-4 20 Z" fill="#242a29" stroke="#8e968f" stroke-width="1.1"/>
+                    <path d="M0 -22 L44 2 Q50 22 32 26 L4 20 Z" fill="#242a29" stroke="#8e968f" stroke-width="1.1"/>
+                    <path d="M-40 10 Q-24 6 -10 12" stroke="#8e968f" stroke-width=".7" fill="none" opacity=".45" stroke-dasharray="3 4"/>
+                    <path d="M40 10 Q24 6 10 12" stroke="#8e968f" stroke-width=".7" fill="none" opacity=".45" stroke-dasharray="3 4"/>
+                    <path d="M0 -24 L0 26" stroke="#c9cfc7" stroke-width="3.2" stroke-linecap="round"/>
+                    <path d="M0 -24 L-7 -35 M0 -24 L7 -35" stroke="#c9cfc7" stroke-width="1.3" stroke-linecap="round"/>
+                  </g>
+                  <text x="20" y="143" fill="#7f8b82" font-family="monospace" font-size="7">MV 125W · 03:02 · worn</text>
+                </svg>
+                <figcaption>
+                  Robinson trap, 125W MV<br>
+                  VC22 Berkshire · SU 4879<br>
+                  23 July 2026, 03:02 · heavily worn
+                </figcaption>
+              </figure>
+
+              <div class="determ">
+                <h3>Oligia <span class="sci">sp.</span></h3>
+                <ul class="cands">
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Marbled Minor</span>
+                        <span class="sci">Oligia strigilis</span></span>
+                      <span class="cand-p">0.31 · not separable</span>
+                    </div>
+                    <div class="bar"><i class="hatched" style="width:31%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Tawny Marbled Minor</span>
+                        <span class="sci">Oligia latruncula</span></span>
+                      <span class="cand-p">0.29 · not separable</span>
+                    </div>
+                    <div class="bar"><i class="hatched" style="width:29%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Rufous Minor</span>
+                        <span class="sci">Oligia versicolor</span></span>
+                      <span class="cand-p">0.24 · not separable</span>
+                    </div>
+                    <div class="bar"><i class="hatched" style="width:24%"></i></div>
+                  </li>
+                  <li>
+                    <div class="cand-top">
+                      <span class="cand-name"><span class="vern">Middle-barred Minor</span>
+                        <span class="sci">Oligia fasciuncula</span></span>
+                      <span class="cand-p">0.11 · separable when fresh</span>
+                    </div>
+                    <div class="bar"><i style="width:11%"></i></div>
+                  </li>
+                </ul>
+
+                <div class="verdict verdict--held">
+                  <span class="k">Held · no determination made</span>
+                  <p><strong>Nothing is proposed.</strong> The specimen is worn, the top
+                     three are a dissection group, and the fourth is only separable on
+                     markings this individual no longer has.</p>
+                  <p>The record is kept as <span class="mono sci">Oligia</span> <span class="mono">sp.</span> with the
+                     photograph attached. A genus-level record from a known garden on a
+                     known date is real data. A guessed species is contamination.</p>
+                </div>
+
+                <div class="actions">
+                  <button type="button" class="btn btn--primary">Keep as Oligia sp.</button>
+                  <button type="button" class="btn">Determine it myself</button>
+                  <button type="button" class="btn">Retain for dissection</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap"><hr class="rule"></div>
+
+  <!-- ======================================================= states -->
+  <div class="wrap">
+    <section id="states">
+      <div class="sec-head">
+        <p class="eyebrow">Certainty</p>
+        <h2>Five states, told apart by fill before they are told apart by colour.</h2>
+        <p>
+          Solid means settled. Hatching means the taxonomy itself will not resolve
+          further from a photograph. The distinction survives greyscale, printing and
+          colour-blindness, because the difference between a species record and an
+          aggregate is not a detail you should have to squint at.
+        </p>
+      </div>
+
+      <div class="states">
+        <div class="state">
+          <span class="swatch s-confirmed"></span>
+          <h3><span class="code">Determined</span>Signed by you</h3>
+          <p>You chose the species. Amber throughout the app means a human made this
+             call. Your name goes in the determiner field.</p>
+        </div>
+        <div class="state">
+          <span class="swatch s-proposed"></span>
+          <h3><span class="code">Proposed</span>Model shortlist</h3>
+          <p>One candidate well clear of the rest, in a group that is genuinely
+             separable from a photograph. Awaiting your confirmation, and useless
+             until it gets one.</p>
+        </div>
+        <div class="state">
+          <span class="swatch s-agg"></span>
+          <h3><span class="code">Aggregate</span>As far as anyone gets</h3>
+          <p>Two or more species that cannot be split externally. Recorded as
+             <span class="mono sci">agg.</span> — the correct answer, not a hedge.</p>
+        </div>
+        <div class="state">
+          <span class="swatch s-genus"></span>
+          <h3><span class="code">Genus</span>Held higher up</h3>
+          <p>Worn, damaged or photographed badly. The record still carries date,
+             site and abundance, which is most of its value.</p>
+        </div>
+        <div class="state">
+          <span class="swatch s-none"></span>
+          <h3><span class="code">Open</span>Nothing claimed</h3>
+          <p>Photograph stored, no name attached. Sits in your queue until you or
+             someone you send it to has a view.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap"><hr class="rule"></div>
+
+  <!-- ======================================================== pairs -->
+  <div class="wrap">
+    <section id="pairs">
+      <div class="sec-head">
+        <p class="eyebrow">Blocked groups</p>
+        <h2>Groups Nightfall will never split from a photograph.</h2>
+        <p>
+          This list is hard-coded, not learned. Whatever the model's weights say, the
+          app cannot return a single species for anything on it — the answer collapses
+          to the aggregate or to the genus. The list is versioned, published, and
+          argued about in the open with county recorders.
+        </p>
+      </div>
+
+      <div class="pairs">
+
+        <div class="pair">
+          <ul>
+            <li><span class="vern">Common Rustic</span> <span class="sci">Mesapamea secalis</span></li>
+            <li><span class="vern">Lesser Common Rustic</span> <span class="sci">Mesapamea didyma</span></li>
+            <li><span class="vern">Remm's Rustic</span> <span class="sci">Mesapamea remmi</span></li>
+          </ul>
+          <span class="method">Genitalia</span>
+          <p class="why">
+            The single most-recorded aggregate in British mothing. Wing pattern varies
+            enormously within each species and overlaps completely between them.
+          </p>
+        </div>
+
+        <div class="pair">
+          <ul>
+            <li><span class="vern">Marbled Minor</span> <span class="sci">Oligia strigilis</span></li>
+            <li><span class="vern">Tawny Marbled Minor</span> <span class="sci">Oligia latruncula</span></li>
+            <li><span class="vern">Rufous Minor</span> <span class="sci">Oligia versicolor</span></li>
+          </ul>
+          <span class="method">Genitalia</span>
+          <p class="why">
+            Fresh, well-marked individuals tempt everyone into a call. The temptation is
+            exactly why the block exists.
+          </p>
+        </div>
+
+        <div class="pair">
+          <ul>
+            <li><span class="vern">November Moth</span> <span class="sci">Epirrita dilutata</span></li>
+            <li><span class="vern">Pale November Moth</span> <span class="sci">Epirrita christyi</span></li>
+            <li><span class="vern">Autumnal Moth</span> <span class="sci">Epirrita autumnata</span></li>
+          </ul>
+          <span class="method">Genitalia</span>
+          <p class="why">
+            Late-autumn traps fill with these. Recorded as
+            <span class="mono sci">Epirrita</span> <span class="mono">agg.</span> unless you have done the work.
+          </p>
+        </div>
+
+        <div class="pair">
+          <ul>
+            <li><span class="vern">Grey Dagger</span> <span class="sci">Acronicta psi</span></li>
+            <li><span class="vern">Dark Dagger</span> <span class="sci">Acronicta tridens</span></li>
+          </ul>
+          <span class="method">Genitalia</span>
+          <p class="why">
+            The larvae are unmistakable and separable on sight; the adults are not.
+            Photograph a caterpillar and the block lifts.
+          </p>
+        </div>
+
+        <div class="pair">
+          <ul>
+            <li><span class="vern">Ear Moth</span> <span class="sci">Amphipoea oculea</span></li>
+            <li><span class="vern">Saltern Ear</span> <span class="sci">Amphipoea fucosa</span></li>
+            <li><span class="vern">Crinan Ear</span> <span class="sci">Amphipoea crinanensis</span></li>
+            <li><span class="vern">Large Ear</span> <span class="sci">Amphipoea lucens</span></li>
+          </ul>
+          <span class="method">Genitalia</span>
+          <p class="why">
+            Habitat and locality shift the priors a great deal here, and Nightfall shows
+            you that they do — but a prior is not a determination.
+          </p>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap"><hr class="rule"></div>
+
+  <!-- ======================================================= export -->
+  <div class="wrap">
+    <section id="export">
+      <div class="sec-head">
+        <p class="eyebrow">Export</p>
+        <h2>The point of the app is the last step, not the first.</h2>
+        <p>
+          Suggestion is the part that gets demonstrated. Getting a legible, complete,
+          correctly-formatted record into the county recorder's inbox is the part that
+          decides whether any of this reaches the national dataset.
+        </p>
+      </div>
+
+      <div class="pipeline">
+        <div class="step">
+          <h3>Trap and photograph</h3>
+          <p>Shoot in the garden with no signal. Everything queues locally; time,
+             date and grid reference are stamped at capture.</p>
+        </div>
+        <div class="step">
+          <h3>Shortlist</h3>
+          <p>Candidates ranked, aggregates collapsed, hard groups blocked. Takes
+             about a second per photograph on the phone itself.</p>
+        </div>
+        <div class="step">
+          <h3>You determine</h3>
+          <p>Confirm, overrule, hold at genus, or set aside for dissection. Nothing
+             leaves the phone unsigned.</p>
+        </div>
+        <div class="step">
+          <h3>To the recorder</h3>
+          <p>One tally per night, in your county's format, with the determination
+             basis on every row so it can be filtered later.</p>
+        </div>
+      </div>
+
+      <div class="fields">
+<pre><span class="c"># nightfall export · VC22 · 2026-07-23 · 11 taxa · 103 individuals</span>
+species        <b>Mesapamea secalis agg.</b>
+vernacular     <b>Common Rustic agg.</b>
+abh_number     <b>73.161</b>            <span class="c">(Agassiz, Beavan &amp; Heckford checklist)</span>
+date           <b>2026-07-23</b>
+grid_ref       <b>SU 4879</b>           <span class="c">(1 km precision, as recorded)</span>
+vice_county    <b>22 · Berkshire</b>
+site           <b>Garden, Blewbury</b>
+recorder       <b>B. Mistry</b>
+determiner     <b>B. Mistry</b>         <span class="c">never the model, in any circumstance</span>
+det_basis      <span class="hl">photograph, model-assisted</span>
+det_confidence <span class="hl">aggregate — not separable externally</span>
+quantity       <b>7</b>
+stage          <b>adult</b>
+method         <b>MV light trap, 125W, Robinson</b>
+photo_ref      <b>nf-2026-0723-0114.jpg</b>
+</pre>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap"><hr class="rule"></div>
+
+  <!-- ======================================================= ledger -->
+  <div class="wrap">
+    <section id="ledger">
+      <div class="sec-head">
+        <p class="eyebrow">One night, filed</p>
+        <h2>A warm, still July night in a Berkshire garden.</h2>
+        <p>
+          Two rows out of eleven are not species records, and the table does not pretend
+          otherwise. That ratio is normal, and a recording app that never produces it is
+          lying to you somewhere.
+        </p>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <caption>23 July 2026 · Robinson 125W MV · 16&nbsp;°C, still, cloud cover 8/8</caption>
+          <thead>
+            <tr>
+              <th scope="col">Taxon</th>
+              <th scope="col">Count</th>
+              <th scope="col">Determination</th>
+              <th scope="col">Basis</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Large Yellow Underwing<span class="sci">Noctua pronuba</span></td>
+              <td class="num">43</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>In hand</td>
+            </tr>
+            <tr>
+              <td>Heart and Dart<span class="sci">Agrotis exclamationis</span></td>
+              <td class="num">18</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>In hand</td>
+            </tr>
+            <tr>
+              <td>Dark Arches<span class="sci">Apamea monoglypha</span></td>
+              <td class="num">11</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>In hand</td>
+            </tr>
+            <tr>
+              <td>Riband Wave<span class="sci">Idaea aversata</span></td>
+              <td class="num">9</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>Photograph</td>
+            </tr>
+            <tr>
+              <td>Common Rustic agg.<span class="sci">Mesapamea secalis agg.</span></td>
+              <td class="num">7</td>
+              <td><span class="tag tag--agg">Aggregate</span></td>
+              <td>Not separable</td>
+            </tr>
+            <tr>
+              <td>Willow Beauty<span class="sci">Peribatodes rhomboidaria</span></td>
+              <td class="num">6</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>Photograph</td>
+            </tr>
+            <tr>
+              <td>Brimstone Moth<span class="sci">Opisthograptis luteolata</span></td>
+              <td class="num">3</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>Photograph</td>
+            </tr>
+            <tr>
+              <td>Silver Y<span class="sci">Autographa gamma</span></td>
+              <td class="num">2</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>Photograph</td>
+            </tr>
+            <tr>
+              <td>Minor moth, worn<span class="sci">Oligia sp.</span></td>
+              <td class="num">2</td>
+              <td><span class="tag tag--open">Genus</span></td>
+              <td>Worn, held</td>
+            </tr>
+            <tr>
+              <td>Elephant Hawk-moth<span class="sci">Deilephila elpenor</span></td>
+              <td class="num">1</td>
+              <td><span class="tag tag--you">Species</span></td>
+              <td>In hand</td>
+            </tr>
+            <tr>
+              <td>Buff Arches<span class="sci">Habrosyne pyritoides</span></td>
+              <td class="num">1</td>
+              <td><span class="tag tag--gen">Species</span></td>
+              <td>gen. det.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap"><hr class="rule"></div>
+
+  <!-- =================================================== objections -->
+  <div class="wrap">
+    <section id="objections">
+      <div class="sec-head">
+        <p class="eyebrow">Fair objections</p>
+        <h2>From recorders who have been doing this since before the model was trained.</h2>
+      </div>
+
+      <div class="objections">
+
+        <div class="obj">
+          <h3>“I have run a trap in this garden for thirty-one years. I do not need a computer to tell me it is a Large Yellow Underwing.”</h3>
+          <p>
+            Then the suggestions are the least valuable thing here and the export is the
+            most. <strong>Turn suggestion off in settings</strong> and Nightfall becomes a
+            notebook that happens to speak MapMate: type the name, it completes from the
+            checklist, the tally builds, the file goes out in your county's columns.
+          </p>
+        </div>
+
+        <div class="obj">
+          <h3>“Apps like this will fill the national dataset with confident rubbish.”</h3>
+          <p>
+            This is the objection we designed around, and it is why every record carries
+            <span class="mono">det_basis</span> and <span class="mono">det_confidence</span> out to the recorder rather than
+            just a species name. <strong>Model-assisted records are flagged permanently</strong> and
+            can be filtered, downweighted or rejected wholesale at the county end. A recorder
+            who wants nothing photo-determined can say so and we will honour it.
+          </p>
+        </div>
+
+        <div class="obj">
+          <h3>“A photograph does not show the features that actually separate these species.”</h3>
+          <p>
+            Correct, and it never will. That is why the model is capped at proposing and why
+            the blocked-group list is hard-coded rather than left to the weights.
+            <strong>Nightfall's ceiling is a shortlist.</strong> Everything above that ceiling is
+            your eyes, your hand lens, or your microscope.
+          </p>
+        </div>
+
+        <div class="obj">
+          <h3>“What happens to my photographs and my grid references?”</h3>
+          <p>
+            Records go where you send them and nowhere else. Full-precision grid references
+            stay on your device unless you choose the precision to share — most recorders
+            send at 1&nbsp;km and blur nothing else. <strong>No dataset is sold, and nothing is
+            submitted on your behalf.</strong>
+          </p>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- ======================================================== close -->
+  <div class="wrap">
+    <section class="close">
+      <p class="eyebrow eyebrow--lamp">Field trial</p>
+      <p>Sixty traps, eight vice-counties, one season. Recorders and county recorders both.</p>
+      <p class="lede">
+        We want the people most likely to find this idea suspect. If you keep a card index
+        and have never once wanted an app, you are exactly who the trial is short of.
+      </p>
+
+      <form class="signup" action="#" method="post">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" placeholder="you@example.org" autocomplete="email" required>
+        <button type="submit" class="btn btn--primary">Join the trial</button>
+        <span class="note">One email at the start of the season, one at the end. Nothing else.</span>
+      </form>
+    </section>
+  </div>
+
+</main>
+
+<div class="wrap">
+  <footer>
+    <div class="footcols">
+      <div>
+        <h4>Records</h4>
+        <p>Exports to iRecord, MapMate CMR, Living Record and plain CSV in your
+           county recorder's own column order.</p>
+      </div>
+      <div>
+        <h4>Taxonomy</h4>
+        <p>Names and numbering follow the Agassiz, Beavan &amp; Heckford checklist.
+           Aggregates follow county recorder practice, not model convenience.</p>
+      </div>
+      <div>
+        <h4>Blocked groups</h4>
+        <p>The hard-coded list is public and versioned. Corrections from recorders
+           are the fastest route into it.</p>
+      </div>
+    </div>
+    <p class="colophon">
+      Nightfall is built with county moth recorders, not around them. Records you
+      submit remain yours; the app is a route to the National Moth Recording Scheme,
+      not a destination.
+    </p>
+  </footer>
+</div>
+
+</body>
+</html>

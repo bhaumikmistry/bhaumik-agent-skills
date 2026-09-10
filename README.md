@@ -2,11 +2,37 @@
 
 Private agent skills for Claude Code.
 
+**[bhaumikmistry.github.io/bhaumik-agent-skills](https://bhaumikmistry.github.io/bhaumik-agent-skills/)**
+— the skills, what each one refuses to do, and four example pages rendered live.
+
 ## Usage
 
 ```bash
 claude --plugin-dir /path/to/bhaumik-agent-skills
 ```
+
+## Examples
+
+Four landing pages built by four agents with the `ui-craft` skill. No visual
+direction was given to any of them — the test was whether they would converge on
+the same generated-looking default. They did not.
+
+| Page | Brief | Direction it committed to | Set in |
+|---|---|---|---|
+| [Pitchside](examples/pitchside.html) | Grassroots football call-offs | A public notice pinned to a clubhouse door | Public Sans |
+| [Nightfall](examples/nightfall.html) | Moth recording for naturalists | A night-lit field ledger, machine in actinic blue | Newsreader |
+| [The Lending Shed](examples/lending-shed.html) | A tool library | A workshop shadow board | Archivo |
+| [Couchette](examples/couchette.html) | European night trains | A printed continental timetable | Bodoni Moda |
+
+Nightfall's best decision is worth calling out: it draws statistical uncertainty
+as a **hatched fill** rather than a percentage, so "these two moths cannot be
+separated without dissection" survives greyscale and colour blindness.
+
+## The landing page is generated
+
+`index.html` is built from the skills themselves by `scripts/build_site.py` and
+must never be edited by hand. Adding a skill without documenting it **fails the
+build**. See [CLAUDE.md](CLAUDE.md).
 
 ## Skills
 

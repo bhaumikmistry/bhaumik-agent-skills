@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitchside — one person decides, everyone knows</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------
+   Pitchside
+   Direction: a public notice pinned to a clubhouse door. Chalk and
+   pitch-ink, one decision stated large with a name and a time under
+   it. Nothing decorative that is not also a status.
+   Neutrals are all tinted toward the pitch green; no pure black,
+   no untinted grey anywhere in this file.
+   --------------------------------------------------------------- */
+
+:root{
+  /* ground + ink */
+  --ground:      #F1F2EC;   /* chalky off-white, green-tinted */
+  --ground-sunk: #E6E9DF;   /* recessed band */
+  --surface:     #FAFAF6;   /* raised notice */
+  --ink:         #14251C;   /* near-black, green-tinted */
+  --ink-soft:    #3B4E42;   /* secondary text, 7.4:1 on --ground */
+  --line:        #C6CDBD;   /* hairline */
+  --line-strong: #9BA793;
+
+  /* decision language — the only colour in the product */
+  --on:      #1B6B3A;  --on-field:   #DCE9D6;  --on-ink:   #123F23;
+  --off:     #A32A1F;  --off-field:  #F2DCD6;  --off-ink:  #6E1B13;
+  --wait:    #8A5A00;  --wait-field: #F0E5C6;  --wait-ink: #563800;
+
+  --accent:      #17593A;
+  --accent-lift: #1E7049;
+
+  --r:  4px;
+  --r-lg: 8px;
+  --measure: 34rem;
+  --shell: 68rem;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:      #121A15;
+    --ground-sunk: #0D130F;
+    --surface:     #1A241D;
+    --ink:         #E9EFE5;
+    --ink-soft:    #AFBFB0;
+    --line:        #2F3D34;
+    --line-strong: #47584C;
+
+    --on:      #6FC98C;  --on-field:   #17301F;  --on-ink:   #A9E4BC;
+    --off:     #EC8878;  --off-field:  #34160F;  --off-ink:  #F5B4A8;
+    --wait:    #DCA943;  --wait-field: #2E2410;  --wait-ink: #EFCB84;
+
+    --accent:      #7CCB9B;
+    --accent-lift: #A2DDB9;
+  }
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"Public Sans", sans-serif;
+  font-size:1.125rem;          /* 18px floor — read at arm's length */
+  line-height:1.6;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+@media (min-width:60rem){ body{ font-size:1.1875rem; } }
+
+h1,h2,h3{ margin:0; font-weight:800; letter-spacing:-0.022em; line-height:1.06; }
+h1{ font-size:clamp(2.35rem, 8.2vw, 4.25rem); }
+h2{ font-size:clamp(1.75rem, 5.2vw, 2.6rem); line-height:1.12; }
+h3{ font-size:1.1875rem; letter-spacing:-0.006em; line-height:1.3; }
+p{ margin:0; }
+a{ color:var(--accent); text-underline-offset:3px; text-decoration-thickness:1.5px; }
+a:hover{ color:var(--accent-lift); }
+strong{ font-weight:600; }
+ul{ margin:0; padding:0; list-style:none; }
+
+:focus-visible{
+  outline:3px solid var(--accent-lift);
+  outline-offset:3px;
+  border-radius:2px;
+}
+
+.shell{ width:100%; max-width:var(--shell); margin-inline:auto; }
+/* Horizontal inset lives on the element that draws the boundary (background or
+   rule), never on .shell — a bordered box must inset its own children. */
+.masthead, section, footer{ padding-left:20px; padding-right:20px; }
+@media (min-width:34rem){ .masthead, section, footer{ padding-left:32px; padding-right:32px; } }
+@media (min-width:60rem){ .masthead, section, footer{ padding-left:48px; padding-right:48px; } }
+.stack > * + *{ margin-top:var(--gap, 1rem); }
+
+.skip{
+  position:absolute; left:-9999px; top:0;
+  background:var(--ink); color:var(--ground);
+  padding:.75rem 1rem; z-index:20; border-radius:0 0 var(--r) 0;
+}
+.skip:focus{ left:0; }
+.skip:hover{ color:var(--ground); }
+
+/* ---------- eyebrow ---------- */
+.eyebrow{
+  font-size:1rem; font-weight:800; letter-spacing:0;
+  color:var(--accent); display:flex; align-items:center; gap:.6rem;
+}
+.eyebrow::before{
+  content:""; width:1.75rem; height:3px; background:var(--accent);
+  flex:none; border-radius:2px;
+}
+
+/* ---------- masthead ---------- */
+.masthead{
+  border-bottom:1px solid var(--line);
+  background:var(--ground);
+}
+.masthead .shell{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; min-height:4.5rem; flex-wrap:wrap;
+}
+.mark{
+  display:inline-flex; align-items:center; gap:.6rem;
+  font-weight:800; font-size:1.3125rem; letter-spacing:-0.02em;
+  color:var(--ink); text-decoration:none;
+}
+.mark svg{ display:block; }
+.masthead nav{ display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; }
+.masthead nav a{
+  font-size:1rem; font-weight:600; color:var(--ink-soft); text-decoration:none;
+  padding-top:.75rem; padding-bottom:.75rem;
+}
+.masthead nav a:hover{ color:var(--ink); text-decoration:underline; }
+@media (max-width:33rem){
+  .masthead nav a.only-wide{ display:none; }
+}
+
+/* ---------- buttons: nothing smaller than a cold thumb ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.55rem;
+  min-height:3.5rem; padding:.9rem 1.6rem;
+  font-family:inherit; font-size:1.0625rem; font-weight:800; letter-spacing:-0.005em;
+  border-radius:var(--r); border:2px solid var(--accent);
+  background:var(--accent); color:var(--ground);
+  text-decoration:none; cursor:pointer;
+  transition:background-color .14s ease-out, border-color .14s ease-out;
+}
+.btn:hover{ background:var(--accent-lift); border-color:var(--accent-lift); color:var(--ground); }
+.btn--quiet{ background:transparent; color:var(--ink); border-color:var(--line-strong); }
+.btn--quiet:hover{ background:transparent; color:var(--ink); border-color:var(--ink); }
+.btn-row{ display:flex; flex-wrap:wrap; gap:.75rem; }
+.btn-row .btn{ flex:1 1 15rem; }
+@media (min-width:34rem){ .btn-row .btn{ flex:0 0 auto; } }
+
+/* ---------- hero ---------- */
+.hero{ padding-top:44px; padding-bottom:40px; position:relative; overflow:hidden; }
+@media (min-width:34rem){ .hero{ padding-top:64px; padding-bottom:52px; } }
+@media (min-width:60rem){ .hero{ padding-top:76px; padding-bottom:56px; } }
+.hero .shell{ position:relative; }
+.chalk{
+  position:absolute; inset-inline-end:-14%; inset-block-start:-22%;
+  width:min(46rem, 105%); height:auto; color:var(--line);
+  opacity:.5; pointer-events:none;
+}
+@media (prefers-color-scheme: dark){ .chalk{ opacity:.7; } }
+.hero-copy{ position:relative; max-width:38rem; }
+.hero-copy p.lead{
+  font-size:1.1875rem; line-height:1.55;
+  color:var(--ink-soft); max-width:31rem;
+}
+@media (min-width:34rem){ .hero-copy p.lead{ font-size:1.375rem; line-height:1.5; } }
+.hero h1 .sep{ color:var(--accent); }
+
+/* ---------- the notice ---------- */
+.notice{
+  margin-top:40px;
+  border:2px solid var(--ink);
+  border-radius:var(--r-lg);
+  background:var(--surface);
+  overflow:hidden;
+  max-width:44rem;
+  position:relative;
+}
+.notice-head{
+  background:var(--off-field);
+  border-bottom:2px solid var(--ink);
+  padding:20px;
+  display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+}
+.verdict{
+  font-size:clamp(1.75rem, 6.4vw, 2.5rem); font-weight:800;
+  letter-spacing:-0.025em; line-height:1; color:var(--off-ink);
+}
+.verdict-time{ font-size:1rem; font-weight:600; color:var(--off-ink); }
+.notice-body{ padding:20px; }
+@media (min-width:34rem){ .notice-head, .notice-body{ padding:28px; } }
+.notice-where{ font-size:1.25rem; font-weight:800; letter-spacing:-0.015em; }
+.notice-sub{ color:var(--ink-soft); margin-top:.15rem; }
+
+.facts{ margin-top:1.35rem; border-top:1px solid var(--line); }
+.facts div{
+  display:flex; gap:1rem; padding:.7rem 0;
+  border-bottom:1px solid var(--line);
+  font-size:1rem; align-items:baseline;
+}
+.facts dt{
+  flex:0 0 7.5rem; margin:0; font-weight:600; color:var(--ink-soft);
+  font-size:.9375rem;
+}
+.facts dd{ margin:0; flex:1 1 auto; }
+@media (max-width:26rem){
+  .facts div{ display:block; }
+  .facts dt{ margin-bottom:.1rem; }
+}
+.stamp{
+  margin-top:1.1rem; font-size:.9375rem; color:var(--ink-soft);
+  display:flex; gap:.5rem; align-items:flex-start;
+}
+.stamp svg{ flex:none; margin-top:.2rem; color:var(--on); }
+
+/* ---------- section furniture ---------- */
+section{ padding-top:52px; padding-bottom:52px; }
+@media (min-width:34rem){ section{ padding-top:72px; padding-bottom:72px; } }
+@media (min-width:60rem){ section{ padding-top:88px; padding-bottom:88px; } }
+.band{ background:var(--ground-sunk); }
+.rule-top{ border-top:1px solid var(--line); }
+.section-head{ max-width:var(--measure); }
+.section-head h2{ margin-top:.7rem; }
+.section-head p{ margin-top:1rem; color:var(--ink-soft); }
+
+/* ---------- the morning it replaces ---------- */
+.timeline{ margin-top:40px; border-top:1px solid var(--line-strong); }
+.timeline li{
+  display:grid; grid-template-columns:5.5rem 1fr; gap:0 1.25rem;
+  padding:.95rem 0; border-bottom:1px solid var(--line);
+  align-items:baseline;
+}
+.timeline time{
+  font-variant-numeric:tabular-nums; font-weight:800;
+  font-size:1rem; color:var(--ink-soft); letter-spacing:.01em;
+}
+.timeline .what{ font-size:1.0625rem; }
+.timeline li.hurts .what{ color:var(--off); font-weight:600; }
+@media (max-width:30rem){
+  .timeline li{ grid-template-columns:1fr; gap:.15rem; }
+}
+.aside-note{
+  margin-top:1.75rem; max-width:44rem;
+  font-size:1.1875rem; font-weight:600; line-height:1.45;
+}
+.aside-note b{ font-weight:800; }
+
+/* ---------- steps ---------- */
+.steps{ margin-top:40px; display:grid; gap:0; }
+@media (min-width:52rem){ .steps{ grid-template-columns:repeat(3,1fr); gap:0 2.5rem; } }
+.step{ padding:1.6rem 0; border-top:2px solid var(--ink); }
+.step-n{ font-size:1rem; font-weight:800; color:var(--accent); }
+.step h3{ margin-top:.55rem; }
+.step p{ margin-top:.55rem; color:var(--ink-soft); font-size:1.0625rem; }
+.step .glyph{ margin-top:1.1rem; color:var(--ink); }
+
+/* the three buttons, shown as they appear on the pitch */
+.choices{ margin-top:1.1rem; display:grid; gap:.55rem; max-width:22rem; }
+.choice{
+  display:flex; align-items:center; gap:.7rem;
+  padding:.85rem 1rem; border-radius:var(--r);
+  font-weight:800; font-size:1.0625rem; letter-spacing:-0.01em;
+  border:2px solid currentColor;
+}
+.choice .dot{ width:.85rem; height:.85rem; border-radius:50%; background:currentColor; flex:none; }
+.c-on  { color:var(--on-ink);   background:var(--on-field); }
+.c-wait{ color:var(--wait-ink); background:var(--wait-field); }
+.c-off { color:var(--off-ink);  background:var(--off-field); }
+
+/* ---------- the record ---------- */
+.log{
+  margin-top:40px;
+  border:1px solid var(--line-strong); border-radius:var(--r-lg);
+  background:var(--surface); overflow:hidden;
+}
+.log-title{
+  padding:.95rem 1.15rem; border-bottom:1px solid var(--line-strong);
+  font-size:1rem; font-weight:800; color:var(--ink);
+  background:var(--ground);
+}
+.log li{
+  display:grid; gap:.15rem .9rem; padding:.95rem 1.15rem;
+  border-bottom:1px solid var(--line);
+  grid-template-columns:auto 1fr;
+}
+.log li:last-child{ border-bottom:0; }
+.log .when{
+  font-variant-numeric:tabular-nums; font-weight:800; font-size:.9375rem;
+  color:var(--ink-soft); grid-column:1; align-self:center;
+  min-width:5.2rem;
+}
+.log .entry{ grid-column:2; }
+.log .verdict-tag{
+  display:inline-block; padding:.15rem .5rem; border-radius:3px;
+  font-size:.8125rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+  margin-right:.45rem; vertical-align:.05em;
+}
+.t-on  { background:var(--on-field);   color:var(--on-ink); }
+.t-wait{ background:var(--wait-field); color:var(--wait-ink); }
+.t-off { background:var(--off-field);  color:var(--off-ink); }
+.log .who{ display:block; font-size:.9375rem; color:var(--ink-soft); margin-top:.15rem; }
+@media (max-width:30rem){
+  .log li{ grid-template-columns:1fr; }
+  .log .when, .log .entry{ grid-column:1; }
+}
+
+/* ---------- built for ---------- */
+.builtfor{ margin-top:40px; display:grid; gap:0; }
+@media (min-width:46rem){ .builtfor{ grid-template-columns:1fr 1fr; column-gap:3rem; } }
+.builtfor li{
+  display:flex; gap:.85rem; padding:1.1rem 0;
+  border-bottom:1px solid var(--line); align-items:flex-start;
+}
+.builtfor svg{ flex:none; color:var(--on); margin-top:.25rem; }
+.builtfor b{ font-weight:800; display:block; }
+.builtfor span.detail{ color:var(--ink-soft); font-size:1rem; }
+
+/* ---------- pricing: one table, not three cards ---------- */
+.prices{
+  margin-top:40px;
+  border:1px solid var(--line-strong); border-radius:var(--r-lg);
+  overflow:hidden; background:var(--surface);
+  display:grid;
+}
+@media (min-width:52rem){ .prices{ grid-template-columns:repeat(3,1fr); } }
+.tier{ padding:24px; border-bottom:1px solid var(--line-strong); }
+@media (min-width:34rem){ .tier{ padding:30px; } }
+.tier:last-child{ border-bottom:0; }
+@media (min-width:52rem){
+  .tier{ border-bottom:0; border-right:1px solid var(--line-strong); }
+  .tier:last-child{ border-right:0; }
+}
+.tier--picked{ background:var(--on-field); }
+.tier h3{ font-size:1.125rem; letter-spacing:0; }
+.tier--picked h3, .tier--picked .price, .tier--picked .per, .tier--picked li, .tier--picked .tier-note{ color:var(--on-ink); }
+.price{ display:block; font-size:2.5rem; font-weight:800; letter-spacing:-0.03em; margin-top:.7rem; line-height:1; }
+.per{ font-size:1rem; color:var(--ink-soft); }
+.tier ul{ margin-top:1.15rem; display:grid; gap:.5rem; font-size:1rem; }
+.tier li{ padding-left:1.35rem; position:relative; }
+.tier li::before{
+  content:""; position:absolute; left:0; top:.62em;
+  width:.5rem; height:.5rem; border-radius:50%; background:var(--accent);
+}
+.tier--picked li::before{ background:var(--on-ink); }
+.tier-note{ margin-top:1.15rem; font-size:.9375rem; color:var(--ink-soft); }
+.price-foot{ margin-top:1.35rem; font-size:1rem; color:var(--ink-soft); max-width:var(--measure); }
+
+/* ---------- questions ---------- */
+.faq{ margin-top:32px; max-width:46rem; }
+.faq details{ border-bottom:1px solid var(--line); }
+.faq details:first-of-type{ border-top:1px solid var(--line-strong); }
+.faq summary{
+  cursor:pointer; list-style:none; padding:1.15rem 2.5rem 1.15rem 0;
+  font-weight:800; font-size:1.0625rem; letter-spacing:-0.008em;
+  position:relative;
+}
+.faq summary::-webkit-details-marker{ display:none; }
+.faq summary::after{
+  content:""; position:absolute; right:.35rem; top:1.5rem;
+  width:.7rem; height:.7rem; border-right:2.5px solid var(--accent); border-bottom:2.5px solid var(--accent);
+  transform:rotate(45deg); transition:transform .16s ease-out;
+}
+.faq details[open] summary::after{ transform:rotate(-135deg); top:1.75rem; }
+.faq .answer{ padding:0 0 1.3rem; color:var(--ink-soft); max-width:var(--measure); }
+
+/* ---------- closing band ---------- */
+.close-band{ background:var(--ink); color:var(--ground); }
+@media (prefers-color-scheme: dark){
+  .close-band{ background:var(--surface); color:var(--ink); border-top:1px solid var(--line); }
+}
+.close-band h2{ max-width:22ch; }
+.close-band p{ margin-top:1.1rem; max-width:var(--measure); color:var(--ground); opacity:.86; }
+@media (prefers-color-scheme: dark){ .close-band p{ color:var(--ink-soft); opacity:1; } }
+.close-band .btn{ background:var(--ground); border-color:var(--ground); color:var(--ink); }
+.close-band .btn:hover{ background:var(--surface); border-color:var(--surface); color:var(--ink); }
+.close-band .btn--quiet{ background:transparent; color:var(--ground); border-color:var(--line-strong); }
+.close-band .btn--quiet:hover{ background:transparent; color:var(--ground); border-color:var(--ground); }
+@media (prefers-color-scheme: dark){
+  .close-band .btn{ background:var(--accent); border-color:var(--accent); color:var(--ground-sunk); }
+  .close-band .btn:hover{ background:var(--accent-lift); border-color:var(--accent-lift); color:var(--ground-sunk); }
+  .close-band .btn--quiet{ background:transparent; color:var(--ink); border-color:var(--line-strong); }
+  .close-band .btn--quiet:hover{ background:transparent; color:var(--ink); border-color:var(--ink); }
+}
+.close-band .btn-row{ margin-top:1.75rem; }
+
+/* ---------- footer ---------- */
+footer{ border-top:1px solid var(--line); padding-top:44px; padding-bottom:56px; font-size:1rem; }
+.foot-grid{ display:grid; gap:2rem; }
+@media (min-width:46rem){ .foot-grid{ grid-template-columns:1.3fr 1fr 1fr; } }
+footer h3{ font-size:1rem; letter-spacing:0; color:var(--ink-soft); }
+footer ul{ margin-top:.85rem; display:grid; gap:.55rem; }
+footer a{ color:var(--ink); text-decoration:none; }
+footer a:hover{ text-decoration:underline; }
+.colophon{
+  margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--line);
+  color:var(--ink-soft); font-size:.9375rem; max-width:46rem;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition-duration:.001ms !important; animation-duration:.001ms !important; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to the main content</a>
+
+<header class="masthead">
+  <div class="shell">
+    <a class="mark" href="#main">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <rect x="1.25" y="1.25" width="23.5" height="23.5" rx="3" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M13 1.5v23" stroke="currentColor" stroke-width="2"/>
+        <circle cx="13" cy="13" r="4.6" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      Pitchside
+    </a>
+    <nav aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="#record" class="only-wide">The record</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#start">Start a club</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <svg class="chalk" viewBox="0 0 640 420" fill="none" aria-hidden="true">
+      <rect x="10" y="10" width="620" height="400" rx="2" stroke="currentColor" stroke-width="3"/>
+      <path d="M320 10v400" stroke="currentColor" stroke-width="3"/>
+      <circle cx="320" cy="210" r="72" stroke="currentColor" stroke-width="3"/>
+      <path d="M10 105h122v210H10" stroke="currentColor" stroke-width="3"/>
+      <path d="M10 158h50v104H10" stroke="currentColor" stroke-width="3"/>
+      <path d="M630 105H508v210h122" stroke="currentColor" stroke-width="3"/>
+      <path d="M630 158h-50v104h50" stroke="currentColor" stroke-width="3"/>
+      <circle cx="320" cy="210" r="5" fill="currentColor"/>
+    </svg>
+
+    <div class="shell">
+      <div class="hero-copy stack" style="--gap:1.5rem">
+        <p class="eyebrow">Saturday morning call-offs, for grassroots clubs</p>
+        <h1>One person decides.<br><span class="sep">Everyone</span> knows in a minute.</h1>
+        <p class="lead">The groundskeeper marks the pitch from where they are standing on it. Every player, every referee and the away club are told at the same moment — with a name and a time attached to the decision.</p>
+        <div class="btn-row">
+          <a class="btn" href="#start">Start a club — free for one team</a>
+          <a class="btn btn--quiet" href="#how">See a Saturday, step by step</a>
+        </div>
+      </div>
+
+      <!-- the notice: one object, no cards inside it -->
+      <article class="notice" aria-label="Example call-off notice">
+        <div class="notice-head">
+          <p class="verdict">Called off</p>
+          <p class="verdict-time">Saturday 14 February, 08:12</p>
+        </div>
+        <div class="notice-body">
+          <p class="notice-where">Barclay Park, Pitch 2</p>
+          <p class="notice-sub">Hoddesdon Town Reserves v Ware Rovers — 10:30 kick-off</p>
+
+          <dl class="facts">
+            <div>
+              <dt>Marked by</dt>
+              <dd>Dave Rankin, groundskeeper</dd>
+            </div>
+            <div>
+              <dt>Reason</dt>
+              <dd>Standing water across the north goalmouth. Six-yard box unplayable.</dd>
+            </div>
+            <div>
+              <dt>Told at once</dt>
+              <dd>41 players, 2 referees, the away club and 3 club officials</dd>
+            </div>
+            <div>
+              <dt>Next fixture</dt>
+              <dd>Pitch 2 reopens for inspection Saturday 21 February, 07:30</dd>
+            </div>
+          </dl>
+
+          <p class="stamp">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/>
+              <path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Sent 08:12. Read by 38 of 46 people before 08:30. Nobody left home.</span>
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ THE MORNING THIS REPLACES ============ -->
+  <section class="band rule-top" id="problem">
+    <div class="shell">
+      <div class="section-head">
+        <p class="eyebrow">The morning this replaces</p>
+        <h2>The pitch was off at twenty to eight. Sixteen under-16s found out at ten.</h2>
+        <p>Nothing here is a weather problem. It is a message problem, and it happens the same way at every club with more than one team and more than one phone number.</p>
+      </div>
+
+      <ul class="timeline">
+        <li><time datetime="07:35">07:35</time><span class="what">Dave walks Pitch 2 in the dark. Water sitting in the north goalmouth, and more coming.</span></li>
+        <li><time datetime="07:52">07:52</time><span class="what">He rings the club secretary. No answer — she is driving her own son to a different fixture.</span></li>
+        <li><time datetime="08:05">08:05</time><span class="what">He starts down the WhatsApp groups. Two of the four are last season's squads.</span></li>
+        <li class="hurts"><time datetime="08:30">08:30</time><span class="what">The away manager has seen nothing. The Ware Rovers minibus leaves on time.</span></li>
+        <li class="hurts"><time datetime="09:15">09:15</time><span class="what">The referee arrives after a forty-minute drive and finds an empty car park.</span></li>
+        <li><time datetime="09:40">09:40</time><span class="what">Three parents ring the pub next to the ground to ask whether it is on.</span></li>
+        <li class="hurts"><time datetime="10:00">10:00</time><span class="what">Sixteen under-16s and two coaches stand at a locked gate in the rain.</span></li>
+        <li><time datetime="11:20">11:20</time><span class="what">The league opens a late call-off case. Nobody can say when the decision was actually made, or by whom.</span></li>
+      </ul>
+
+      <p class="aside-note">The decision was right and it was made early. It just never became something anyone could see. That last line is the whole reason Pitchside exists.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="how" class="rule-top">
+    <div class="shell">
+      <div class="section-head">
+        <p class="eyebrow">How it works</p>
+        <h2>Three taps, standing on the grass, with cold hands.</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <p class="step-n">Step one</p>
+          <h3>Open the pitch you are standing on</h3>
+          <p>The link in your Saturday morning text opens straight to today's fixtures. No password at 7am, no app store, no update waiting to install.</p>
+          <div class="glyph">
+            <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
+              <rect x="12.5" y="3.5" width="21" height="39" rx="3.5" stroke="currentColor" stroke-width="2.5"/>
+              <path d="M20 8.5h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              <rect x="17" y="15" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="2"/>
+              <path d="M17 30h12M17 35.5h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="step">
+          <p class="step-n">Step two</p>
+          <h3>Mark it, and say why in five words</h3>
+          <p>Three buttons, each the size of a thumb. A reason is optional but it is the thing that stops the phone ringing all morning. Add a photo of the goalmouth if it will save an argument.</p>
+          <div class="choices" role="img" aria-label="The three buttons: Playable, Inspecting again at 09:00, and Called off">
+            <p class="choice c-on"><span class="dot"></span>Playable</p>
+            <p class="choice c-wait"><span class="dot"></span>Inspecting again at 09:00</p>
+            <p class="choice c-off"><span class="dot"></span>Called off</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <p class="step-n">Step three</p>
+          <h3>Everyone on that fixture is told</h3>
+          <p>Text and email, inside a minute: the home squad, the away club's secretary and squad, the referee, and the league. Away teams pay nothing and install nothing to be on the list.</p>
+          <div class="glyph">
+            <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
+              <circle cx="10.5" cy="23" r="5" stroke="currentColor" stroke-width="2.5"/>
+              <circle cx="34" cy="10.5" r="5" stroke="currentColor" stroke-width="2.5"/>
+              <circle cx="34" cy="35.5" r="5" stroke="currentColor" stroke-width="2.5"/>
+              <path d="m15.2 20.6 14-7.7M15.2 25.4l14 7.7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE RECORD ============ -->
+  <section id="record" class="band rule-top">
+    <div class="shell">
+      <div class="section-head">
+        <p class="eyebrow">The record</p>
+        <h2>Who decided what, and when. Written down before anyone asks.</h2>
+        <p>Every mark carries a name, a time and a pitch. When the league queries a late call-off in March, the answer is a page you can send them, not four people trying to remember February.</p>
+      </div>
+
+      <div class="log">
+        <p class="log-title">Barclay Park — decision log, February</p>
+        <ul>
+          <li>
+            <span class="when">Sat 08:12</span>
+            <span class="entry"><span class="verdict-tag t-off">Called off</span>Pitch 2 — standing water, north goalmouth
+              <span class="who">Dave Rankin, groundskeeper · 46 people notified</span></span>
+          </li>
+          <li>
+            <span class="when">Sat 07:58</span>
+            <span class="entry"><span class="verdict-tag t-wait">Inspecting</span>Pitch 2 — second look at 08:30
+              <span class="who">Dave Rankin, groundskeeper · 46 people notified</span></span>
+          </li>
+          <li>
+            <span class="when">Sat 07:41</span>
+            <span class="entry"><span class="verdict-tag t-on">Playable</span>Pitch 1 — firm, no frost overnight
+              <span class="who">Dave Rankin, groundskeeper · 29 people notified</span></span>
+          </li>
+          <li>
+            <span class="when">Fri 18:02</span>
+            <span class="entry"><span class="verdict-tag t-off">Called off</span>Pitch 3 — frozen solid by 5pm, no thaw forecast
+              <span class="who">Marie Ellison, club secretary · 33 people notified</span></span>
+          </li>
+        </ul>
+      </div>
+
+      <p class="price-foot">Export the season as a PDF whenever the league, the county FA or your own committee asks for it.</p>
+    </div>
+  </section>
+
+  <!-- ============ BUILT FOR ============ -->
+  <section class="rule-top">
+    <div class="shell">
+      <div class="section-head">
+        <p class="eyebrow">Built for the person walking the pitch</p>
+        <h2>Not for a phone in an office. For a phone in a wet coat pocket.</h2>
+      </div>
+
+      <ul class="builtfor">
+        <li>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/><path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Buttons you can hit in gloves.</b><span class="detail">Nothing on the marking screen is smaller than a thumb, and there is no confirm dialogue to fumble.</span></span>
+        </li>
+        <li>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/><path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Works on one bar of signal.</b><span class="detail">If the mark cannot send, it queues and goes when the signal returns. The time on the record is the moment you tapped, not the moment it sent.</span></span>
+        </li>
+        <li>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/><path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Nothing to install, for anybody.</b><span class="detail">Groundskeepers open a link. Players and referees receive a text. That is the entire technical requirement.</span></span>
+        </li>
+        <li>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/><path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Ten minutes to change your mind.</b><span class="detail">A mark can be pulled back for ten minutes without a fuss. After that a correction is posted, and both entries stay on the record.</span></span>
+        </li>
+        <li>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/><path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Readable in bad light.</b><span class="detail">Heavy type, strong contrast, no pale grey small print, and it turns dark automatically when your phone does.</span></span>
+        </li>
+        <li>
+          <svg width="20" height="20" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="7.6" stroke="currentColor" stroke-width="2"/><path d="m5.6 9.2 2.3 2.3 4.5-4.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span><b>Only named people can mark.</b><span class="detail">The club secretary decides who holds that authority for each pitch, and can hand it over on a Friday night when someone is away.</span></span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ PRICING ============ -->
+  <section id="pricing" class="band rule-top">
+    <div class="shell">
+      <div class="section-head">
+        <p class="eyebrow">Pricing</p>
+        <h2>Paid once a season, in August, like everything else at a club.</h2>
+      </div>
+
+      <div class="prices">
+        <div class="tier">
+          <h3>Single team</h3>
+          <span class="price">Free</span>
+          <span class="per">one team, one pitch, always</span>
+          <ul>
+            <li>Unlimited marks and call-offs</li>
+            <li>Text and email to your squad</li>
+            <li>The away club and referee included</li>
+            <li>Full decision log</li>
+          </ul>
+          <p class="tier-note">For a club running one Saturday side. It does not expire and it is not a trial.</p>
+        </div>
+
+        <div class="tier tier--picked">
+          <h3>Club</h3>
+          <span class="price">£45</span>
+          <span class="per">a season, for the whole club</span>
+          <ul>
+            <li>Up to eight teams and four pitches</li>
+            <li>Several named groundskeepers</li>
+            <li>Friday evening and Saturday marks</li>
+            <li>Season exported as a PDF</li>
+            <li>Someone answers the phone on a Saturday</li>
+          </ul>
+          <p class="tier-note">What most clubs take. Roughly the cost of two match balls.</p>
+        </div>
+
+        <div class="tier">
+          <h3>League</h3>
+          <span class="price">£250</span>
+          <span class="per">a season, every club included</span>
+          <ul>
+            <li>Every member club set up for you</li>
+            <li>One page showing every call-off live</li>
+            <li>Late call-off evidence on request</li>
+            <li>Invoiced once, in August</li>
+          </ul>
+          <p class="tier-note">For league and county secretaries who currently chase this by phone.</p>
+        </div>
+      </div>
+
+      <p class="price-foot">No monthly billing, no per-player charge, and no card needed to start. Away clubs and referees are never charged for being told.</p>
+    </div>
+  </section>
+
+  <!-- ============ QUESTIONS ============ -->
+  <section class="rule-top">
+    <div class="shell">
+      <div class="section-head">
+        <p class="eyebrow">Questions we get asked</p>
+        <h2>Straight answers.</h2>
+      </div>
+
+      <div class="faq">
+        <details open>
+          <summary>Does it decide for us, using weather data?</summary>
+          <p class="answer">No, and it never will. A forecast does not know that your north goalmouth holds water for two days after rain. The person standing on it does. Pitchside carries a human decision — it does not make one.</p>
+        </details>
+        <details>
+          <summary>Our groundskeeper does not really do apps.</summary>
+          <p class="answer">There is no app. He gets a text on Saturday morning with a link; the link opens three buttons. If he would still rather ring someone, he rings the secretary and she marks it — the record then shows that she marked it on his call, which is more than anyone can prove today.</p>
+        </details>
+        <details>
+          <summary>What do players have to do?</summary>
+          <p class="answer">Nothing. They receive a text. There is no account to make, no password to forget, and no group chat to be added to.</p>
+        </details>
+        <details>
+          <summary>What if we mark it off and then it dries out?</summary>
+          <p class="answer">You have ten minutes to pull a mark back before anything is sent as final. After that you post a new mark, everyone is told again, and both entries stay in the log with their times. Changing your mind is normal; hiding that you changed it is what causes rows.</p>
+        </details>
+        <details>
+          <summary>Who is allowed to call a pitch off?</summary>
+          <p class="answer">Only the people the club secretary names, pitch by pitch. Authority can be handed to someone else in a couple of taps when the usual person is away, and that handover is itself recorded.</p>
+        </details>
+        <details>
+          <summary>We are a five-team club with three pitches. Which one do we need?</summary>
+          <p class="answer">The Club tier at £45 for the season. If you are unsure, start on the free tier with your first team this Saturday and move up when it has proved itself — nothing is lost in the move.</p>
+        </details>
+        <details>
+          <summary>What happens to our data at the end of the season?</summary>
+          <p class="answer">It stays yours. The decision log is exportable at any time, phone numbers are used only to send match notices, and nothing is sold to anyone. If you leave, we delete the numbers and you keep the export.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLOSE ============ -->
+  <section id="start" class="close-band">
+    <div class="shell">
+      <h2>Set your club up before the first cold snap.</h2>
+      <p>It takes about fifteen minutes: add your pitches, add your teams, and paste in the phone numbers you already keep in a spreadsheet. Then it is one link on a Saturday morning, for the rest of the winter.</p>
+      <div class="btn-row">
+        <a class="btn" href="#start">Start a club — free for one team</a>
+        <a class="btn btn--quiet" href="#start">Ask us something first</a>
+      </div>
+      <p style="margin-top:1.5rem;font-size:1rem">We answer on Saturday mornings, because that is when it matters.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="shell">
+    <div class="foot-grid">
+      <div>
+        <a class="mark" href="#main">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+            <rect x="1.25" y="1.25" width="23.5" height="23.5" rx="3" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M13 1.5v23" stroke="currentColor" stroke-width="2"/>
+            <circle cx="13" cy="13" r="4.6" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          Pitchside
+        </a>
+        <p style="margin-top:.85rem;color:var(--ink-soft);max-width:24rem">Made in Hertfordshire for clubs who play whatever the weather does, and need everyone to know which it is.</p>
+      </div>
+      <div>
+        <h3>The service</h3>
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#record">The decision record</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#problem">Why it exists</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Get in touch</h3>
+        <ul>
+          <li><a href="mailto:hello@pitchside.football">hello@pitchside.football</a></li>
+          <li><a href="#start">Set up a club</a></li>
+          <li><a href="#start">Set up a league</a></li>
+          <li><a href="#pricing">Accessibility statement</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="colophon">Pitchside is an independent service and is not affiliated with any league, county football association or the Football Association. Phone numbers are used only to send fixture notices for your own club.</p>
+  </div>
+</footer>
+
+</body>
+</html>
