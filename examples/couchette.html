@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Couchette — European night trains, booked across operators</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------
+   Couchette — design system
+   Direction: a printed continental timetable read at night.
+   Hairline rules, never cards. Tabular mono for anything a
+   traveller compares. Sodium-lamp amber against blue-tinted ink.
+   Bookability is a column in the table, not an error state.
+   Neutrals are tinted toward the accent in both themes.
+--------------------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+
+  /* paper */
+  --paper:      #f6f1e7;
+  --paper-2:    #efe8da;
+  --paper-3:    #e6ddcb;
+
+  /* ink, tinted blue-violet, never pure black or pure grey */
+  --ink:        #1c1d2a;
+  --ink-2:      #4e4f63;
+  --ink-3:      #6f6a72;
+  --rule:       #c9bfa9;
+  --rule-soft:  #ded4c0;
+
+  /* accent: sodium platform lamp */
+  --amber:      #a8590c;
+  --amber-soft: #f0d9b4;
+
+  /* status, deliberately not a red/green traffic light */
+  --go:         #26624a;
+  --go-soft:    #d6e4d5;
+  --wait:       #8a5a13;
+  --wait-soft:  #f1dcb6;
+  --phone:      #5b4482;
+  --phone-soft: #ded4ec;
+  --off:        #6b5f57;
+  --off-soft:   #e0d7c8;
+
+  --measure: 34rem;
+  --gutter: clamp(1.25rem, 5vw, 4rem);
+  --ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:      #14151f;
+    --paper-2:    #1a1c27;
+    --paper-3:    #232533;
+    --ink:        #ece5d7;
+    --ink-2:      #b3aca0;
+    --ink-3:      #948d86;
+    --rule:       #343648;
+    --rule-soft:  #272a38;
+    --amber:      #e9a54a;
+    --amber-soft: #3a2c18;
+    --go:         #86c79f;
+    --go-soft:    #1c2e26;
+    --wait:       #e0b060;
+    --wait-soft:  #33280f;
+    --phone:      #b9a2e0;
+    --phone-soft: #272038;
+    --off:        #a2968a;
+    --off-soft:   #262229;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-feature-settings: "kern", "liga";
+}
+
+h1, h2, h3 { font-weight: 400; margin: 0; text-wrap: balance; }
+
+p { margin: 0 0 1em; max-width: var(--measure); }
+
+a { color: inherit; text-underline-offset: .22em; text-decoration-thickness: 1px; }
+a:hover { text-decoration-color: var(--amber); }
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+.wrap { max-width: 72rem; margin-inline: auto; padding-inline: var(--gutter); }
+
+.mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: .8125rem;
+  letter-spacing: .01em;
+}
+
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .6875rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 0 0 1.5rem;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 5;
+}
+.masthead .wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: .9rem;
+}
+.logo {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: lowercase;
+  text-decoration: none;
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+}
+.logo .dot {
+  width: .4rem; height: .4rem; border-radius: 50%;
+  background: var(--amber);
+  display: inline-block;
+  translate: 0 -.15rem;
+}
+.masthead nav {
+  display: flex;
+  gap: clamp(.75rem, 3vw, 1.75rem);
+  font-size: .8125rem;
+}
+.masthead nav a { text-decoration: none; color: var(--ink-2); }
+.masthead nav a:hover { color: var(--ink); }
+@media (max-width: 30rem) { .masthead nav a.hide-s { display: none; } }
+
+/* ---------- hero ---------- */
+
+.hero { padding-block: clamp(3rem, 9vw, 6.5rem) clamp(2rem, 5vw, 3.5rem); }
+
+.hero h1 {
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(2.6rem, 8.5vw, 5.25rem);
+  line-height: .98;
+  letter-spacing: -.015em;
+  max-width: 16ch;
+}
+.hero h1 em { font-style: italic; color: var(--amber); }
+
+.hero .lede {
+  font-size: clamp(1.0625rem, 2.4vw, 1.25rem);
+  color: var(--ink-2);
+  max-width: 42ch;
+  margin-top: 1.75rem;
+}
+
+.hero-foot {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+.btn {
+  font: inherit;
+  font-size: .9375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .7rem 1.15rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background .18s var(--ease), color .18s var(--ease);
+}
+.btn:hover { background: var(--amber); border-color: var(--amber); color: var(--paper); }
+@media (prefers-color-scheme: dark) { .btn:hover { color: var(--paper); } }
+.btn .arrow { transition: translate .18s var(--ease); }
+.btn:hover .arrow { translate: .2rem 0; }
+
+.hero-note { font-size: .875rem; color: var(--ink-2); max-width: 30ch; margin: 0; }
+
+/* ---------- section furniture ---------- */
+
+/* Static insets, not clamp(): the border-bearing sections need a padding
+   value that reads as a real inset at every width. Scaled by breakpoint. */
+section { padding-block: 44px; }
+.ruled { border-top: 1px solid var(--rule); padding-top: 44px; padding-bottom: 44px; }
+@media (min-width: 48rem) {
+  section { padding-block: 72px; }
+  .ruled { padding-top: 72px; padding-bottom: 72px; }
+}
+
+.sec-head { margin-bottom: 2.25rem; }
+.sec-head h2 {
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(1.75rem, 4.5vw, 2.6rem);
+  line-height: 1.08;
+  max-width: 20ch;
+}
+.sec-head p { margin-top: .85rem; color: var(--ink-2); }
+
+/* ---------- the board ---------- */
+
+.filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+.filters-and-board > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.filters label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  letter-spacing: .02em;
+  padding: .4rem .7rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--ink-2);
+  transition: border-color .16s var(--ease), color .16s var(--ease);
+}
+.filters label:hover { border-color: var(--amber); color: var(--ink); }
+#f-all:focus-visible  ~ .filters label[for="f-all"],
+#f-go:focus-visible   ~ .filters label[for="f-go"],
+#f-wait:focus-visible ~ .filters label[for="f-wait"],
+#f-hand:focus-visible ~ .filters label[for="f-hand"] { outline: 2px solid var(--amber); outline-offset: 2px; }
+#f-all:checked  ~ .filters label[for="f-all"],
+#f-go:checked   ~ .filters label[for="f-go"],
+#f-wait:checked ~ .filters label[for="f-wait"],
+#f-hand:checked ~ .filters label[for="f-hand"] {
+  background: var(--ink); color: var(--paper); border-color: var(--ink);
+}
+#f-go:checked   ~ .board .row:not(.s-go),
+#f-wait:checked ~ .board .row:not(.s-wait),
+#f-hand:checked ~ .board .row:not(.s-phone):not(.s-off) { display: none; }
+#f-go:checked   ~ .board .empty-go,
+#f-wait:checked ~ .board .empty-wait,
+#f-hand:checked ~ .board .empty-hand { display: block; }
+
+.board { border-top: 1px solid var(--rule); padding-top: .5rem; }
+
+.board-head {
+  display: grid;
+  grid-template-columns: 1.55fr .8fr 1.05fr 1.25fr;
+  gap: 1rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .6875rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+@media (max-width: 52rem) { .board-head { display: none; } }
+
+.row {
+  display: grid;
+  grid-template-columns: 1.55fr .8fr 1.05fr 1.25fr;
+  gap: .4rem 1rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  align-items: start;
+}
+.row:hover { background: var(--paper-2); }
+
+.route { font-size: 1.0625rem; line-height: 1.3; }
+.route .arrowline { color: var(--amber); padding-inline: .3em; }
+.route small {
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  color: var(--ink-3);
+  margin-top: .3rem;
+  letter-spacing: .02em;
+}
+
+.times { color: var(--ink); }
+.times .next { display: block; color: var(--ink-3); margin-top: .25rem; }
+
+.op { font-size: .875rem; color: var(--ink-2); }
+.op .cadence {
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  color: var(--ink-3);
+  margin-top: .25rem;
+}
+
+.status { display: flex; gap: .55rem; align-items: flex-start; }
+.status .pip {
+  flex: none;
+  width: .55rem; height: .55rem;
+  border-radius: 50%;
+  margin-top: .48rem;
+}
+.status .label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  line-height: 1.45;
+}
+.status .why { display: block; color: var(--ink-2); font-size: .8125rem; margin-top: .2rem; }
+
+.s-go    .pip { background: var(--go); }
+.s-go    .label { color: var(--go); }
+.s-wait  .pip { background: var(--wait); }
+.s-wait  .label { color: var(--wait); }
+.s-phone .pip { background: var(--phone); }
+.s-phone .label { color: var(--phone); }
+.s-off   .pip { background: var(--off); box-shadow: inset 0 0 0 1px var(--paper); }
+.s-off   .label { color: var(--off); }
+
+.price {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: .8125rem;
+  color: var(--ink-2);
+  margin: .35rem 0 0;
+  max-width: none;
+}
+/* The fare line is a fifth child of a four-column grid: keep it on one line
+   under the route rather than letting it wrap inside column one. */
+@media (min-width: 52.01rem) { .price { grid-column: 1 / 4; margin-top: 0; } }
+.price b { font-weight: 500; color: var(--ink); }
+
+@media (max-width: 52rem) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: .55rem;
+    padding: 1.15rem 0;
+  }
+  .row > * { max-width: none; }
+  .op { order: 3; }
+  .status { order: 4; padding-top: .15rem; }
+}
+
+.empty {
+  display: none;
+  padding: 1.25rem 0 0;
+  color: var(--ink-2);
+  font-size: .875rem;
+}
+.empty p { margin: 0; }
+
+.board-foot {
+  margin-top: 1.5rem;
+  font-size: .8125rem;
+  color: var(--ink-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem 1.25rem;
+}
+.board-foot span { display: inline-flex; align-items: center; gap: .45rem; }
+.board-foot i { width: .5rem; height: .5rem; border-radius: 50%; display: inline-block; }
+
+/* ---------- the corridor ---------- */
+
+.corridor { margin-top: 1rem; }
+
+.legs { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 2px; }
+@media (min-width: 46rem) { .legs { grid-template-columns: repeat(3, 1fr); } }
+
+.leg { background: var(--paper); padding: 1.15rem 1.15rem 1.25rem; }
+.leg .n {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .6875rem;
+  letter-spacing: .14em;
+  color: var(--ink-3);
+}
+.leg h3 { font-size: 1rem; margin: .35rem 0 .1rem; font-weight: 500; }
+.leg .who { font-size: .8125rem; color: var(--ink-2); }
+
+.window {
+  margin-top: .9rem;
+  padding-top: .8rem;
+  border-top: 1px dashed var(--rule);
+}
+.window .bar {
+  height: .4rem;
+  border-radius: 2px;
+  background: var(--paper-3);
+  overflow: hidden;
+  margin-bottom: .5rem;
+}
+.window .fill { display: block; height: 100%; background: var(--amber); }
+.window .cap {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  color: var(--ink-2);
+}
+.window .cap b { color: var(--ink); font-weight: 500; }
+
+.corridor-note {
+  margin-top: 1.25rem;
+  border-left: 2px solid var(--amber);
+  padding-left: 1rem;
+  color: var(--ink-2);
+  max-width: 46ch;
+}
+
+/* ---------- berths ---------- */
+
+.berths { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 2px; }
+@media (min-width: 40rem) { .berths { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 62rem) { .berths { grid-template-columns: repeat(4, 1fr); } }
+
+.berth { background: var(--paper); padding: 1.15rem; display: flex; flex-direction: column; }
+.berth svg { width: 100%; height: auto; display: block; margin-bottom: .9rem; }
+.berth h3 { font-size: 1rem; font-weight: 500; }
+.berth .from {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: .8125rem;
+  color: var(--amber);
+  margin: .2rem 0 .55rem;
+}
+.berth p { font-size: .8125rem; color: var(--ink-2); margin: 0; }
+.berth .sharing {
+  margin-top: .8rem;
+  padding-top: .7rem;
+  border-top: 1px dashed var(--rule);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  color: var(--ink-2);
+}
+
+/* ---------- limits ---------- */
+
+.limits { counter-reset: lim; border-top: 1px solid var(--rule); padding-top: .75rem; }
+.limit {
+  counter-increment: lim;
+  border-bottom: 1px solid var(--rule-soft);
+  padding: 1.4rem 0;
+  display: grid;
+  gap: .35rem 1.75rem;
+}
+@media (min-width: 46rem) { .limit { grid-template-columns: 3rem 1fr 1fr; } }
+.limit::before {
+  content: counter(lim, decimal-leading-zero);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .8125rem;
+  color: var(--amber);
+  padding-top: .2rem;
+}
+.limit h3 { font-size: 1.125rem; font-weight: 500; line-height: 1.35; }
+.limit p { margin: 0; color: var(--ink-2); font-size: .9375rem; }
+
+/* ---------- fees ---------- */
+
+.fees { display: grid; gap: 1.5rem 2.5rem; }
+@media (min-width: 46rem) { .fees { grid-template-columns: repeat(3, 1fr); } }
+.fee { border-top: 2px solid var(--ink); padding-top: .9rem; }
+.fee .amt {
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+.fee h3 { font-size: .9375rem; font-weight: 500; margin: .5rem 0 .3rem; }
+.fee p { font-size: .875rem; color: var(--ink-2); margin: 0; }
+
+/* ---------- questions ---------- */
+
+.qa { border-top: 1px solid var(--rule); padding-top: .75rem; }
+.qa details { border-bottom: 1px solid var(--rule-soft); }
+.qa summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1.05rem 2rem 1.05rem 0;
+  position: relative;
+  font-size: 1.0625rem;
+  transition: color .16s var(--ease);
+}
+.qa summary::-webkit-details-marker { display: none; }
+.qa summary:hover { color: var(--amber); }
+.qa summary::after {
+  content: "";
+  position: absolute; right: .35rem; top: 1.5rem;
+  width: .55rem; height: .55rem;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  rotate: 45deg;
+  transition: rotate .18s var(--ease);
+}
+.qa details[open] summary::after { rotate: -135deg; }
+.qa .ans { padding-bottom: 1.25rem; color: var(--ink-2); }
+.qa .ans p:last-child { margin-bottom: 0; }
+
+/* ---------- closing ---------- */
+
+.close { border-top: 1px solid var(--rule); padding-top: 44px; }
+@media (min-width: 48rem) { .close { padding-top: 72px; } }
+.close .wrap { display: grid; gap: 1.75rem; }
+@media (min-width: 50rem) { .close .wrap { grid-template-columns: 1.15fr .85fr; align-items: end; } }
+.close h2 {
+  font-family: "Bodoni Moda", Georgia, serif;
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  line-height: 1.05;
+}
+.close form { display: flex; flex-wrap: wrap; gap: .6rem; }
+.close label { flex: 1 1 14rem; }
+.close .lab {
+  display: block;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: .6875rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: .4rem;
+}
+.close input {
+  font: inherit;
+  width: 100%;
+  padding: .68rem .8rem;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--ink);
+}
+.close input::placeholder { color: var(--ink-3); }
+.close .btn { align-self: end; }
+.close .small { font-size: .8125rem; color: var(--ink-2); margin: .9rem 0 0; }
+
+footer { border-top: 1px solid var(--rule); padding-block: 2rem 3rem; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; align-items: baseline; }
+footer p { font-size: .8125rem; color: var(--ink-3); margin: 0; max-width: 44ch; }
+footer nav { display: flex; gap: 1.25rem; font-size: .8125rem; }
+footer nav a { color: var(--ink-2); text-decoration: none; }
+footer nav a:hover { color: var(--amber); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="logo" href="#top"><span class="dot"></span>Couchette</a>
+    <nav>
+      <a href="#board">Routes</a>
+      <a href="#corridor" class="hide-s">Why it&rsquo;s hard</a>
+      <a href="#berths">Berths</a>
+      <a href="#limits" class="hide-s">Limits</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>Fourteen hours, <em>one</em> ticket, and the truth about the ones we can&rsquo;t sell you.</h1>
+      <p class="lede">
+        A Brussels&ndash;Bucharest sleeper crosses three operators, three reservation
+        systems and three booking windows that open months apart. We hold all of
+        them and issue the tickets as each one opens. Where a leg genuinely cannot
+        be sold online, we say so on this page rather than after you&rsquo;ve paid.
+      </p>
+      <div class="hero-foot">
+        <a class="btn" href="#board">Check a route <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        <p class="hero-note">64 overnight routes covered. 11 of them still need a human on a telephone.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ruled" id="board">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">The board</p>
+        <h2>What is bookable tonight, and what is not.</h2>
+        <p>
+          Berth availability, checked against each operator&rsquo;s system this morning.
+          A route with a later window is not a route we&rsquo;ve failed to sell &mdash; it
+          is a train whose operator has not loaded the timetable yet.
+        </p>
+      </div>
+
+      <div class="filters-and-board">
+        <input type="radio" name="filter" id="f-all" checked>
+        <input type="radio" name="filter" id="f-go">
+        <input type="radio" name="filter" id="f-wait">
+        <input type="radio" name="filter" id="f-hand">
+        <div class="filters" role="group" aria-label="Filter routes by booking status">
+          <label for="f-all">All 14</label>
+          <label for="f-go">Bookable now</label>
+          <label for="f-wait">Opens later</label>
+          <label for="f-hand">Needs a person</label>
+        </div>
+
+        <div class="board">
+          <div class="board-head" aria-hidden="true">
+            <span>Route</span><span>Depart / arrive</span><span>Operator</span><span>Booking</span>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Brussels-Midi <span class="arrowline">&rarr;</span> Wien Hbf<small>NJ 40490 &middot; via K&ouml;ln, Linz</small></div>
+            <div class="times mono">19:22 &rarr; 09:50<span class="next">Next berth: tonight</span></div>
+            <div class="op">&Ouml;BB Nightjet<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 21 Feb 2027</span></span>
+            </div>
+            <p class="price">Couchette 6 from <b>&euro;59.90</b> &middot; sleeper 2 from &euro;179</p>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Paris-Est <span class="arrowline">&rarr;</span> Wien Hbf<small>NJ 40469 &middot; via Strasbourg, M&uuml;nchen</small></div>
+            <div class="times mono">19:12 &rarr; 09:33<span class="next">Next berth: Thu 11 Sep</span></div>
+            <div class="op">&Ouml;BB Nightjet / SNCF<span class="cadence">Mon, Thu, Sat</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 21 Feb 2027</span></span>
+            </div>
+            <p class="price">Couchette 6 from <b>&euro;69.90</b> &middot; sleeper 2 from &euro;199</p>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Paris-Est <span class="arrowline">&rarr;</span> Berlin Hbf<small>NJ 40468 &middot; via Karlsruhe, Erfurt</small></div>
+            <div class="times mono">19:12 &rarr; 08:26<span class="next">Next berth: tonight</span></div>
+            <div class="op">&Ouml;BB Nightjet / DB<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 21 Feb 2027</span></span>
+            </div>
+            <p class="price">Seat from <b>&euro;39.90</b> &middot; couchette 6 from &euro;79.90</p>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Brussels-Midi <span class="arrowline">&rarr;</span> Praha hl.n.<small>ES 452 &middot; via Amsterdam, Berlin, Dresden</small></div>
+            <div class="times mono">19:22 &rarr; 10:56<span class="next">Next berth: Wed 10 Sep</span></div>
+            <div class="op">European Sleeper<span class="cadence">Mon, Wed, Fri</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 04 Apr 2027</span></span>
+            </div>
+            <p class="price">Seat from <b>&euro;49</b> &middot; couchette 6 from &euro;99 &middot; sleeper 2 from &euro;229</p>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Amsterdam Centraal <span class="arrowline">&rarr;</span> Z&uuml;rich HB<small>NJ 40421 &middot; via Utrecht, Basel</small></div>
+            <div class="times mono">19:30 &rarr; 08:20<span class="next">Next berth: tonight</span></div>
+            <div class="op">&Ouml;BB Nightjet / NS<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 21 Feb 2027</span></span>
+            </div>
+            <p class="price">Couchette 6 from <b>&euro;69.90</b> &middot; mini-cabin from &euro;119</p>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Paris-Austerlitz <span class="arrowline">&rarr;</span> Nice-Ville<small>IC 5773 &middot; via Marseille, Toulon</small></div>
+            <div class="times mono">21:07 &rarr; 09:12<span class="next">Next berth: tonight</span></div>
+            <div class="op">SNCF Intercit&eacute;s de Nuit<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 08 Jan 2027</span></span>
+            </div>
+            <p class="price">Seat from <b>&euro;29</b> &middot; couchette 6 from &euro;49 &middot; couchette 4 from &euro;69</p>
+          </div>
+
+          <div class="row s-go">
+            <div class="route">Roma Termini <span class="arrowline">&rarr;</span> Palermo Centrale<small>ICN 1955 &middot; ferry crossing at Villa San Giovanni</small></div>
+            <div class="times mono">21:05 &rarr; 09:15<span class="next">Next berth: tonight</span></div>
+            <div class="op">Trenitalia Intercity Notte<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Bookable now<span class="why">Window open to 08 Jan 2027</span></span>
+            </div>
+            <p class="price">Couchette 4 from <b>&euro;54.90</b> &middot; sleeper 2 from &euro;129</p>
+          </div>
+
+          <div class="row s-wait">
+            <div class="route">Z&uuml;rich HB <span class="arrowline">&rarr;</span> Zagreb Gl. kol.<small>NJ 40465 &middot; through coach beyond Ljubljana</small></div>
+            <div class="times mono">21:00 &rarr; 09:33<span class="next">Ljubljana leg sells now</span></div>
+            <div class="op">&Ouml;BB Nightjet / S&#381; / H&#381;<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Opens 60 days out<span class="why">H&#381; loads the Zagreb coach on 12 Nov for December travel</span></span>
+            </div>
+            <p class="price">Couchette 6 from <b>&euro;74.90</b> &middot; Zagreb supplement &euro;12 on issue</p>
+          </div>
+
+          <div class="row s-wait">
+            <div class="route">Wien Hbf <span class="arrowline">&rarr;</span> Bucure&#537;ti Nord<small>EN 473 <em>Dacia</em> &middot; via Budapest, Arad</small></div>
+            <div class="times mono">19:42 &rarr; 17:05<span class="next">Austrian leg sells now</span></div>
+            <div class="op">&Ouml;BB / M&Aacute;V / CFR C&#259;l&#259;tori<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Opens 30 days out<span class="why">CFR will not release Romanian berths earlier. We hold and issue automatically.</span></span>
+            </div>
+            <p class="price">Sleeper 3 from <b>&euro;89</b> &middot; couchette 6 from &euro;59</p>
+          </div>
+
+          <div class="row s-wait">
+            <div class="route">Budapest Keleti <span class="arrowline">&rarr;</span> Bucure&#537;ti Nord<small>EN 473 &middot; boarding the Dacia mid-route</small></div>
+            <div class="times mono">19:30 &rarr; 17:05<span class="next">Opens 09 Oct for Nov travel</span></div>
+            <div class="op">M&Aacute;V-START / CFR<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Opens 60 days out<span class="why">M&Aacute;V publishes the international timetable in 60-day blocks</span></span>
+            </div>
+            <p class="price">Sleeper 3 from <b>&euro;64</b> &middot; couchette 6 from &euro;44</p>
+          </div>
+
+          <div class="row s-wait">
+            <div class="route">Stockholm C <span class="arrowline">&rarr;</span> Berlin Hbf<small>SN 301 &middot; via Malm&ouml;, ferry-free via the &Oslash;resund bridge</small></div>
+            <div class="times mono">17:16 &rarr; 09:56<span class="next">Season resumes 19 Jun 2027</span></div>
+            <div class="op">Sn&auml;llt&aring;get<span class="cadence">Summer season, 4&times; weekly</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Opens 10 Nov<span class="why">Seasonal service. Sn&auml;llt&aring;get opens the 2027 season in one release.</span></span>
+            </div>
+            <p class="price">Couchette 6 from <b>&euro;79</b> &middot; sleeper 2 from &euro;189</p>
+          </div>
+
+          <div class="row s-phone">
+            <div class="route">Bucure&#537;ti Nord <span class="arrowline">&rarr;</span> Istanbul (Halkal&#305;)<small>EN 461 <em>Bosfor</em> &middot; bus transfer Halkal&#305;&ndash;S&#305;rkeci</small></div>
+            <div class="times mono">12:40 &rarr; 08:00<span class="next">Ask us 21 days ahead</span></div>
+            <div class="op">CFR / B&#68;&#381; / TCDD<span class="cadence">Daily, June&ndash;September</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">We book by phone<span class="why">TCDD sells the Turkish sleeper at the station only. We call Bucharest and post the ticket.</span></span>
+            </div>
+            <p class="price">Sleeper 2 from <b>&euro;75</b> &middot; our phone-booking fee &euro;14</p>
+          </div>
+
+          <div class="row s-phone">
+            <div class="route">Bar <span class="arrowline">&rarr;</span> Beograd Centar<small>Train 1101 &middot; the Mala Rijeka viaduct at first light</small></div>
+            <div class="times mono">19:00 &rarr; 06:20<span class="next">Ask us 14 days ahead</span></div>
+            <div class="op">&#381;PCG / Srbija Voz<span class="cadence">Daily</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">We book by phone<span class="why">No online berth sale exists in either country. Seats can be bought at Bar station.</span></span>
+            </div>
+            <p class="price">Sleeper 3 from <b>&euro;29</b> &middot; our phone-booking fee &euro;14</p>
+          </div>
+
+          <div class="row s-off">
+            <div class="route">Lisboa Oriente <span class="arrowline">&rarr;</span> Hendaye<small><em>Sud Expresso</em> &middot; last ran 20 Mar 2020</small></div>
+            <div class="times mono">21:31 &rarr; 08:14<span class="next">No date announced</span></div>
+            <div class="op">CP Comboios de Portugal<span class="cadence">Suspended</span></div>
+            <div class="status">
+              <span class="pip"></span>
+              <span class="label">Not running<span class="why">Rolling stock withdrawn. We will email you if CP reinstates it &mdash; nothing else to sell here.</span></span>
+            </div>
+            <p class="price">Daytime alternative: Lisboa &rarr; Hendaye in 15h with one change at Vigo</p>
+          </div>
+
+          <div class="empty empty-go">
+            <p>Seven routes are open right now. The other seven are on this list because we would rather show you a train you cannot yet book than pretend it does not exist.</p>
+          </div>
+          <div class="empty empty-wait">
+            <p>Four routes are waiting on an operator. We hold your itinerary and charge nothing until the tickets actually issue.</p>
+          </div>
+          <div class="empty empty-hand">
+            <p>Three routes have no online berth sale anywhere in Europe. Two of them we handle by telephone; one is not running at all.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="board-foot">
+        <span><i style="background: var(--go);"></i> Bookable now</span>
+        <span><i style="background: var(--wait);"></i> Operator&rsquo;s window opens later</span>
+        <span><i style="background: var(--phone);"></i> We book it by phone</span>
+        <span><i style="background: var(--off);"></i> Not currently running</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="ruled" id="corridor">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Why it is hard</p>
+        <h2>One journey. Three operators. Three windows that open five months apart.</h2>
+        <p>
+          Paris to Bucharest by sleeper, 41 hours with one evening in Vienna. Nothing
+          about the trains is difficult. The booking is.
+        </p>
+      </div>
+
+      <div class="corridor">
+        <div class="legs">
+          <div class="leg">
+            <p class="n">LEG 01</p>
+            <h3>Paris-Est &rarr; Wien Hbf</h3>
+            <p class="who">&Ouml;BB Nightjet, sold by &Ouml;BB and SNCF</p>
+            <div class="window">
+              <div class="bar"><span class="fill" style="width: 100%;"></span></div>
+              <p class="cap">Opens <b>180 days</b> ahead &middot; on sale</p>
+            </div>
+          </div>
+          <div class="leg">
+            <p class="n">LEG 02</p>
+            <h3>Wien Hbf &rarr; Budapest Keleti</h3>
+            <p class="who">M&Aacute;V-START, Railjet day connection</p>
+            <div class="window">
+              <div class="bar"><span class="fill" style="width: 33%;"></span></div>
+              <p class="cap">Opens <b>60 days</b> ahead &middot; 09 Oct</p>
+            </div>
+          </div>
+          <div class="leg">
+            <p class="n">LEG 03</p>
+            <h3>Budapest &rarr; Bucure&#537;ti Nord</h3>
+            <p class="who">CFR C&#259;l&#259;tori sleeper on the <em>Dacia</em></p>
+            <div class="window">
+              <div class="bar"><span class="fill" style="width: 17%;"></span></div>
+              <p class="cap">Opens <b>30 days</b> ahead &middot; 08 Nov</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="corridor-note">
+          Book leg one in March and you are committed to a journey whose last berth
+          does not exist until November. Couchette holds the whole itinerary as one
+          order, issues each ticket the hour its window opens, and refunds the legs
+          already issued in full if a later one sells out before we reach it. That
+          is the actual product. We did not fix European rail ticketing; we sat in
+          the queue for you.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ruled" id="berths">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">What you are buying</p>
+        <h2>A berth is not a hotel room.</h2>
+        <p>
+          Below the sleeper grade, you are sharing a compartment with people you have
+          not met. Most travellers find this fine and some find it unbearable, and the
+          difference costs about &euro;140. Occupied berths are shown filled.
+        </p>
+      </div>
+
+      <div class="berths">
+        <div class="berth">
+          <svg viewBox="0 0 120 84" role="img" aria-label="Six-berth compartment: three bunks on each side, all six occupied.">
+            <rect x="1" y="1" width="118" height="82" rx="3" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+            <g fill="var(--ink-2)">
+              <rect x="10" y="10" width="44" height="15" rx="2"/>
+              <rect x="10" y="34" width="44" height="15" rx="2"/>
+              <rect x="10" y="58" width="44" height="15" rx="2"/>
+              <rect x="66" y="10" width="44" height="15" rx="2"/>
+              <rect x="66" y="34" width="44" height="15" rx="2"/>
+              <rect x="66" y="58" width="44" height="15" rx="2"/>
+            </g>
+          </svg>
+          <h3>Couchette, 6 berth</h3>
+          <p class="from">from &euro;44</p>
+          <p>A padded shelf, a sheet, a pillow. You sleep in your clothes. Three bunks high on each side.</p>
+          <p class="sharing">Shared with 5 strangers &middot; mixed &middot; corridor WC</p>
+        </div>
+
+        <div class="berth">
+          <svg viewBox="0 0 120 84" role="img" aria-label="Four-berth compartment: two bunks on each side, all four occupied.">
+            <rect x="1" y="1" width="118" height="82" rx="3" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+            <g fill="var(--ink-2)">
+              <rect x="10" y="14" width="44" height="19" rx="2"/>
+              <rect x="10" y="51" width="44" height="19" rx="2"/>
+              <rect x="66" y="14" width="44" height="19" rx="2"/>
+              <rect x="66" y="51" width="44" height="19" rx="2"/>
+            </g>
+          </svg>
+          <h3>Couchette, 4 berth</h3>
+          <p class="from">from &euro;69</p>
+          <p>The same shelf with room to sit up on it. The single best value on most routes.</p>
+          <p class="sharing">Shared with 3 strangers &middot; women-only on request</p>
+        </div>
+
+        <div class="berth">
+          <svg viewBox="0 0 120 84" role="img" aria-label="Two-berth sleeper: one bunk on each side, both occupied, with a washbasin.">
+            <rect x="1" y="1" width="118" height="82" rx="3" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+            <g fill="var(--ink-2)">
+              <rect x="10" y="16" width="44" height="24" rx="2"/>
+              <rect x="10" y="52" width="44" height="24" rx="2"/>
+            </g>
+            <rect x="66" y="16" width="44" height="60" rx="2" fill="none" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <circle cx="88" cy="46" r="7" fill="none" stroke="var(--amber)" stroke-width="1.5"/>
+          </svg>
+          <h3>Sleeper, 2 berth</h3>
+          <p class="from">from &euro;179</p>
+          <p>Proper bedding, a lockable door and a washbasin in the compartment. Breakfast is included on &Ouml;BB.</p>
+          <p class="sharing">Shared with 1 stranger, or sole use for the double fare</p>
+        </div>
+
+        <div class="berth">
+          <svg viewBox="0 0 120 84" role="img" aria-label="Single sleeper: one occupied bunk with a private shower and WC.">
+            <rect x="1" y="1" width="118" height="82" rx="3" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+            <rect x="10" y="28" width="44" height="28" rx="2" fill="var(--ink-2)"/>
+            <rect x="66" y="12" width="44" height="60" rx="2" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+            <circle cx="88" cy="30" r="7" fill="none" stroke="var(--amber)" stroke-width="1.5"/>
+            <path d="M78 50h20v18H78z" fill="none" stroke="var(--amber)" stroke-width="1.5"/>
+          </svg>
+          <h3>Sleeper, single</h3>
+          <p class="from">from &euro;229</p>
+          <p>Your own compartment. On newer Nightjet stock, your own shower and WC as well.</p>
+          <p class="sharing">Nobody else &middot; roughly 12 per train &middot; sells out first</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ruled" id="limits">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Before you commit</p>
+        <h2>Four things we cannot fix for you.</h2>
+        <p>
+          These are properties of European rail, not gaps in our software. If any of
+          them is a dealbreaker, better to find out here than at 21:40 on a platform
+          in Vienna.
+        </p>
+      </div>
+
+      <div class="limits">
+        <div class="limit">
+          <h3>Some tickets cannot exist until 30 or 60 days before departure.</h3>
+          <p>
+            CFR, M&Aacute;V, H&#381; and several Balkan operators load berths in short
+            windows. We hold the itinerary and issue the moment the window opens, but
+            we cannot conjure inventory that the railway has not created. You are
+            planning, not confirmed, until every leg has a number.
+          </p>
+        </div>
+        <div class="limit">
+          <h3>Eleven routes still require a telephone call to a station.</h3>
+          <p>
+            Bucharest&ndash;Istanbul, Bar&ndash;Belgrade and nine others have no online
+            berth sale of any kind. Someone here calls, holds, and posts you a paper
+            ticket. It costs &euro;14 and it takes up to three working days. It is not
+            instant and we will not pretend it is.
+          </p>
+        </div>
+        <div class="limit">
+          <h3>Below the sleeper grade, you share with strangers.</h3>
+          <p>
+            A six-berth couchette is exactly that: six people, one small room, a shared
+            corridor WC. Women-only compartments can be requested on &Ouml;BB, SNCF and
+            Trenitalia, and are honoured when the load allows. Sole occupancy costs
+            roughly &euro;140 more.
+          </p>
+        </div>
+        <div class="limit">
+          <h3>A missed connection abroad is a slow problem, not a fast one.</h3>
+          <p>
+            CIV rules oblige the next operator to carry you, and we will argue that on
+            your behalf. But it may mean a daytime train and a hotel, not a re-booked
+            sleeper &mdash; there is usually only one a night, and it has already gone.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ruled" id="fees">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">What we charge</p>
+        <h2>We take a fee, not a margin.</h2>
+        <p>Fares are the operators&rsquo; own. We do not mark them up and we show you what each leg costs.</p>
+      </div>
+      <div class="fees">
+        <div class="fee">
+          <p class="amt">&euro;4</p>
+          <h3>Per traveller, per booking</h3>
+          <p>Whatever the itinerary contains &mdash; one leg or five, one operator or four.</p>
+        </div>
+        <div class="fee">
+          <p class="amt">&euro;14</p>
+          <h3>Routes we book by phone</h3>
+          <p>Charged only if we get the berth. A person, a telephone and a stamp cost more than an API call.</p>
+        </div>
+        <div class="fee">
+          <p class="amt">&euro;0</p>
+          <h3>Holding an unopened window</h3>
+          <p>Nothing is taken until a ticket issues. If a leg sells out first, the issued legs refund in full.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ruled" id="questions">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Asked often</p>
+        <h2>Questions with unflattering answers.</h2>
+      </div>
+      <div class="qa">
+        <details>
+          <summary>Is this cheaper than booking with &Ouml;BB directly?</summary>
+          <div class="ans"><p>No. It is &euro;4 more. If your whole journey is a single Nightjet, book it on nightjet.com and keep the four euros &mdash; we would rather tell you that than take it. We earn our fee on journeys that cross operators, which is where their own sites stop working.</p></div>
+        </details>
+        <details>
+          <summary>Can I get a refund if I cancel?</summary>
+          <div class="ans"><p>Under each operator&rsquo;s own rules, which vary badly. &Ouml;BB Sparschiene and SNCF Pr&eacute;m&rsquo;s fares are non-refundable. Flexible Nightjet fares refund up to departure minus &euro;10. CFR sleepers refund 50&#37; beyond 24 hours and nothing inside it. We show the applicable rule per leg at checkout, before payment.</p></div>
+        </details>
+        <details>
+          <summary>What happens if the Romanian leg never opens?</summary>
+          <div class="ans"><p>You get every issued leg refunded in full, including our fee, and an email the day we know rather than the week of travel. It happened to 3&#37; of Dacia bookings last winter, mostly around engineering works between Arad and Deva.</p></div>
+        </details>
+        <details>
+          <summary>Do you handle Interrail seat reservations?</summary>
+          <div class="ans"><p>Yes, for the operators on the board above, at the same &euro;4. Night trains are where Interrail passes get awkward: the pass covers the journey, the berth is a compulsory extra of &euro;25&ndash;&euro;79, and on the Dacia it can only be bought in Romania.</p></div>
+        </details>
+        <details>
+          <summary>Can I bring a bicycle?</summary>
+          <div class="ans"><p>On Nightjet, European Sleeper and Sn&auml;llt&aring;get, yes &mdash; a reserved bike space is &euro;9&ndash;&euro;25 and there are between 6 and 21 per train. On the Dacia and most Italian night trains, only folded and bagged. We will tell you which before you pay, not after.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="close">
+    <div class="wrap">
+      <div>
+        <h2>Tell us where you are going. We will tell you if it is possible.</h2>
+        <p class="small">
+          An honest answer within a day, including &ldquo;fly, this one is not worth it
+          yet&rdquo; &mdash; which is what we said to 140 people last month.
+        </p>
+      </div>
+      <form onsubmit="return false;">
+        <label>
+          <span class="lab">From &rarr; to</span>
+          <input type="text" name="route" placeholder="Brussels &rarr; Bucharest" autocomplete="off">
+        </label>
+        <button class="btn" type="submit">Check it <span class="arrow" aria-hidden="true">&rarr;</span></button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Couchette &middot; Rue de Bruxelles 14, 1000 Brussels &middot; IATA-free, licensed rail retailer for &Ouml;BB, SNCF, Trenitalia, European Sleeper and Sn&auml;llt&aring;get. Times shown are local and taken from the December 2026 timetable.</p>
+    <nav>
+      <a href="#board">Routes</a>
+      <a href="#limits">Limits</a>
+      <a href="#fees">Fees</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>
