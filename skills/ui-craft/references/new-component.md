@@ -3,6 +3,13 @@
 Reached only when the shadcn catalogue and the project's own components have
 both been checked and neither fits. Say what you checked before you start.
 
+**This page assumes React.** The props contract below - `value`/`onChange`,
+controlled and uncontrolled - is a React idea and does not translate to a
+standalone HTML page, a web component or a template. For those, keep the rows
+about keyboard, announcement, tokens, themes, motion and states, and read the
+props row as "state can be driven from outside the component" in whatever form
+that takes. Publishing to a shadcn registry is React-only regardless.
+
 ## The bar
 
 A component that is going to be published has to clear all of this. A component
